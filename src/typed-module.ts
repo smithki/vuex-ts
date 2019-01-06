@@ -54,7 +54,7 @@ export class VuexTsModule<
   readonly mappedMutations: MappedMutations<Mutations>;
   readonly staticActions: StaticActions;
   readonly mappedActions: MappedActions<Actions>;
-  readonly state: ModuleState | undefined;
+  readonly initialState: ModuleState | undefined;
   readonly commit: CommitFunc<Mutations> & MappedMutations<Mutations>;
   readonly dispatch: DispatchFunc<Actions> & MappedActions<Actions>;
 
@@ -84,7 +84,7 @@ export class VuexTsModule<
     this.staticMutations = {};
     this.mappedActions = {} as any;
     this.staticActions = {};
-    if (moduleState) this.state = moduleState;
+    if (moduleState) this.initialState = moduleState;
 
     // --- Build strongly-typed getters --- //
 
@@ -184,6 +184,29 @@ export class VuexTsModule<
     this.dispatch = Object.assign(dispatchFunc, this.mappedActions);
   }
 
+  // --- Vuex-related props/methods ----------------------------------------- //
+
+  /** Get this module's state from its registered Vuex store. */
+  get state(): ModuleState {
+    if (moduleIsBound(this)) {
+      const modulePath = this.namespacedKey.split('/');
+      const store = getStore(this);
+      let stateObj = store.state;
+
+      for (const part of modulePath) {
+        stateObj = stateObj[part];
+      }
+
+      return stateObj;
+    }
+
+    throw new Error(
+      `Module '${this.name}' is not registered to a Vuex store. Call '${
+        this.name
+      }.register()' before attempting to access state.`,
+    );
+  }
+
   // --- VuexTS-related utilities ------------------------------------------- //
 
   /** Gets the stringified namespace key for this module. */
@@ -195,7 +218,7 @@ export class VuexTsModule<
   get vuexModule(): Module<ModuleState, RootState> {
     return {
       namespaced: true,
-      state: () => this.state || ({} as any),
+      state: () => this.initialState || ({} as any),
       getters: this.staticGetters,
       mutations: this.staticMutations,
       actions: this.staticActions,

@@ -1,4 +1,4 @@
-import { Module, Store } from 'vuex';
+import { ActionContext, Module, Store } from 'vuex';
 import { bindModuleToStore, getStore, moduleIsBound, qualifyNamespace, unbindModuleFromStore } from './lib';
 import { context, rootState, state } from './symbols';
 import {
@@ -11,7 +11,6 @@ import {
   StaticActions,
   StaticGetters,
   StaticMutations,
-  VuexTsActionContext,
 } from './types';
 
 // --- Getters -------------------------------------------------------------- //
@@ -31,7 +30,9 @@ export abstract class ModuleMutations<ModuleState> {
 // --- Actions -------------------------------------------------------------- //
 
 export abstract class ModuleActions<ModuleState, RootState> {
-  [context]: VuexTsActionContext<ModuleState, RootState>;
+  [state]: ModuleState;
+  [rootState]: RootState;
+  [context]: ActionContext<ModuleState, RootState>;
   [key: string]: (payload?: any) => Promise<any>;
 }
 
@@ -153,6 +154,8 @@ export class VuexTsModule<
           const actContext = new Proxy(actInst, {
             get: (target, prop, reciever) => {
               if (prop === context) return vuexContext;
+              if (prop === state) return vuexContext.state;
+              if (prop === rootState) return vuexContext.rootState;
               return Reflect.get(target, prop, reciever);
             },
           });

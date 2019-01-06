@@ -1,3 +1,4 @@
+import { ActionContext } from 'vuex';
 import { context, rootState, state } from './symbols';
 import { ModuleActions, ModuleGetters, ModuleMutations } from './typed-module';
 
@@ -30,15 +31,10 @@ export type CommitFunc<T extends ModuleMutations<any>> = (
 
 // --- Actions -------------------------------------------------------------- //
 
-export interface VuexTsActionContext<ModuleState, RootState> {
-  state: ModuleState;
-  rootState: RootState;
-}
-
-export type StaticActions = { [key: string]: (vuexContext: any, payload: any) => Promise<any> };
+export type StaticActions = { [key: string]: (vuexContext: ActionContext<any, any>, payload: any) => Promise<any> };
 export type MappedActions<T extends ModuleActions<any, any>> = { [P in KnownKeys<T>]: T[P] };
 
 export type DispatchFunc<T extends ModuleActions<any, any>> = (
-  actionName: Exclude<KnownKeys<T>, typeof context>,
+  actionName: Exclude<KnownKeys<T>, typeof context | typeof state | typeof rootState>,
   ...payload: ArgumentTypes<T[typeof actionName]>
 ) => ReturnType<T[typeof actionName]>;

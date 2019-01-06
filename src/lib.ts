@@ -1,6 +1,5 @@
 import { Store } from 'vuex';
-import { ModuleActions, ModuleGetters, ModuleMutations, VuexTsModule } from './typed-module';
-import { ConstructorOf } from './types';
+import { VuexTsModule } from './typed-module';
 
 // --- Constants ------------------------------------------------------------ //
 
@@ -61,54 +60,4 @@ export function registerVuexTsModules<RootState>(...vuexTsModules: VuexTsModule<
   return (store: Store<RootState>) => {
     vuexTsModules.forEach(mod => mod.register(store));
   };
-}
-
-/**
- * Builds a strongly-typed Vuex module.
- *
- * @example
- * // Compose your module:
- * const myModule = createVuexTsModule({
- *   name: 'myModule',
- *   state,
- *   getters,
- *   mutations,
- *   actions,
- * });
- *
- * // Register your module dynamically to a Vuex store:
- * myModule.register(store);
- *
- * // Likewise, you can unregister your module:
- * myModule.unregister();
- */
-export function createVuexTsModule<
-  ModuleState,
-  RootState,
-  Getters extends ModuleGetters<ModuleState, RootState>,
-  Mutations extends ModuleMutations<ModuleState>,
-  Actions extends ModuleActions<ModuleState, RootState>
->({
-  name,
-  state,
-  getters,
-  mutations,
-  actions,
-  modules,
-}: {
-  name: string;
-  state?: ModuleState;
-  getters?: ConstructorOf<Getters>;
-  mutations?: ConstructorOf<Mutations>;
-  actions?: ConstructorOf<Actions>;
-  modules?: VuexTsModule<any, RootState, any, any, any>[];
-}): VuexTsModule<ModuleState, RootState, Getters, Mutations, Actions> {
-  return new VuexTsModule({
-    name,
-    state,
-    getters,
-    mutations,
-    actions,
-    modules,
-  });
 }

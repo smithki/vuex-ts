@@ -19,9 +19,10 @@
     "build": "npm-run-all -s clean:dist compile",
     "compile": "microbundle build src/index.ts --external vuex --name VuexTs",
     "compile_watch": "microbundle watch src/index.ts --external vuex --name VuexTs",
-    "example": "parcel example/index.html",
+    "example": "parcel example/index.html --out-dir example-dist",
     "clean": "npm-run-all -s clean:*",
     "clean:dist": "rimraf dist && rimraf coverage",
+    "clean:example-dist": "rimraf example-dist",
     "clean:cache": "rimraf .rts2_cache_*"
   },
   "peerDependencies": {

@@ -1,6 +1,6 @@
 {
   "name": "vuex-ts",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "A TypeScript pattern for strongly-typed access to Vuex Store modules.",
   "author": "Ian K Smith <smithki707@gmail.com>",
   "license": "MIT",

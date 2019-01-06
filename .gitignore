@@ -4,7 +4,8 @@ coverage/**/*
 npm-debug.log
 src/**/*.js
 src/**/*.js.map
-dist/**
+dist/**/*
+example-dist/**/*
 .vscode/**/*
 .rts2_cache_*
 .cache/**/*

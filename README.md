@@ -23,7 +23,7 @@ npm install vuex-ts
 
 ### Creating a basic module
 
-VuexTs has a simple API consisting of two functions: `createVuexTsModule` and `registerVuexTsModules`. The rest is a prescribed pattern to ensure strong-typing, enforced by abstract TypeScript classes and supported by Symbol-based access to contextual `state`, `rootState`, and other features of Vuex from within your getter, mutation, and action handlers. If you're familiar with Redux, some of this pattern may be familiar.
+VuexTs has a simple API consisting of two functions: `createVuexTsModule` and `registerVuexTsModules`. The rest is a prescribed pattern to ensure strong-typing, enforced by abstract TypeScript classes and supported by Symbol-based access to contextual `state`, `rootState`, and other features of Vuex from within your getter, mutation, and action handlers. If you're familiar with Redux, some of this pattern may also be familiar.
 
 Let's start with a basic example:
 

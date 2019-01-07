@@ -164,7 +164,7 @@ export class VuexTsModule<
         };
 
         (this.mappedActions as any)[name] = (payload: any) => {
-          getStore(this).dispatch(`${this.namespacedKey}/${name}`, payload, { root: true }) as any;
+          return getStore(this).dispatch(`${this.namespacedKey}/${name}`, payload, { root: true }) as any;
         };
       }
     }

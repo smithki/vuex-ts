@@ -1,6 +1,6 @@
 {
   "name": "vuex-ts",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "A TypeScript pattern for strongly-typed access to Vuex Store modules.",
   "author": "Ian K Smith <smithki707@gmail.com>",
   "license": "MIT",
@@ -17,8 +17,8 @@
   "scripts": {
     "dev": "npm-run-all -s clean:dist compile_watch",
     "build": "npm-run-all -s clean:dist compile",
-    "compile": "microbundle build src/index.ts --external vuex --name VuexTs",
-    "compile_watch": "microbundle watch src/index.ts --external vuex --name VuexTs",
+    "compile": "microbundle build src/index.ts --name VuexTs",
+    "compile_watch": "microbundle watch src/index.ts --name VuexTs",
     "example": "parcel example/index.html --out-dir example-dist",
     "clean": "npm-run-all -s clean:*",
     "clean:dist": "rimraf dist && rimraf coverage",
@@ -26,7 +26,7 @@
     "clean:cache": "rimraf .rts2_cache_*"
   },
   "peerDependencies": {
-    "vuex": "^3.0.0"
+    "vuex": "^3.0.1"
   },
   "devDependencies": {
     "@ikscodes/tslint-config": "^5.3.1",

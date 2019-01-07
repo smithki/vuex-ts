@@ -17,8 +17,8 @@
   "scripts": {
     "dev": "npm-run-all -s clean:dist compile_watch",
     "build": "npm-run-all -s clean:dist compile",
-    "compile": "microbundle build src/index.ts --name VuexTs",
-    "compile_watch": "microbundle watch src/index.ts --name VuexTs",
+    "compile": "microbundle build src/index.ts --external vuex --name VuexTs",
+    "compile_watch": "microbundle watch src/index.ts --external vuex --name VuexTs",
     "example": "parcel example/index.html --out-dir example-dist",
     "clean": "npm-run-all -s clean:*",
     "clean:dist": "rimraf dist && rimraf coverage",

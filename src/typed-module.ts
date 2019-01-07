@@ -160,7 +160,7 @@ export class VuexTsModule<
             },
           });
 
-          (actContext as any)[name](payload);
+          return (actContext as any)[name](payload);
         };
 
         (this.mappedActions as any)[name] = (payload: any) => {

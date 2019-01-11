@@ -1,21 +1,58 @@
 import { ActionContext, Module, Store } from 'vuex';
 import { bindModuleToStore, getStore, moduleIsBound, qualifyNamespace, unbindModuleFromStore } from './lib';
-import { context, rootState, state } from './symbols';
-import {
-  CommitFunc,
-  ConstructorOf,
-  DispatchFunc,
-  MappedActions,
-  MappedGetters,
-  MappedMutations,
-  StaticActions,
-  StaticGetters,
-  StaticMutations,
-} from './types';
+import { context, rootState, state, staticActions, staticGetters, staticMutations } from './symbols';
+import { CommitFunc, ConstructorOf, DispatchFunc, StaticActions, StaticGetters, StaticMutations } from './types';
 
 // --- Getters -------------------------------------------------------------- //
 
 export abstract class ModuleGetters<ModuleState, RootState> {
+  constructor(parentModule: VuexTsModule<ModuleState, RootState, any, any, any>) {
+    return new Proxy(this, {
+      get: (target, prop, receiver) => {
+        if (typeof prop !== 'symbol') {
+          if (!moduleIsBound(parentModule)) {
+            throw new Error(
+              `You must register '${parentModule.name}' to a Vuex store before accessing getters. Call '${
+                parentModule.name
+              }.register(store)'`,
+            );
+          }
+
+          return getStore(parentModule).getters[`${parentModule.namespacedKey}/${prop}`];
+        }
+
+        return Reflect.get(target, prop, receiver);
+      },
+    });
+  }
+
+  get [staticGetters]() {
+    const methodNames = Object.getOwnPropertyNames(Object.getPrototypeOf(this)).filter(name => name !== 'constructor');
+    const result: StaticGetters = {};
+
+    for (const name of methodNames) {
+      const proto = Object.getPrototypeOf(this);
+      const unwrappedProxy = Object.create(proto);
+      const isComputedGetter = Boolean(Object.getOwnPropertyDescriptor(proto, name)!.get);
+
+      result[name] = (vuexState, vuexRootState) => {
+        const getContext = new Proxy(unwrappedProxy, {
+          get: (target, prop, receiver) => {
+            if (prop === state) return vuexState;
+            if (prop === rootState) return vuexRootState;
+
+            // Unwrap the proxy and return the getter value.
+            return Reflect.get(target, prop, receiver);
+          },
+        });
+
+        return isComputedGetter ? (getContext as any)[name] : (getContext as any)[name].bind(getContext);
+      };
+    }
+
+    return result;
+  }
+
   [state]: ModuleState;
   [rootState]: RootState;
 }
@@ -23,6 +60,51 @@ export abstract class ModuleGetters<ModuleState, RootState> {
 // --- Mutations ------------------------------------------------------------ //
 
 export abstract class ModuleMutations<ModuleState> {
+  constructor(parentModule: VuexTsModule<ModuleState, any, any, any, any>) {
+    return new Proxy(this, {
+      get: (target, prop, receiver) => {
+        if (typeof prop !== 'symbol') {
+          if (!moduleIsBound(parentModule)) {
+            throw new Error(
+              `You must register '${parentModule.name}' to a Vuex store before accessing mutations. Call '${
+                parentModule.name
+              }.register(store)'`,
+            );
+          }
+
+          return (payload: any) => {
+            getStore(parentModule).commit(`${parentModule.namespacedKey}/${prop}`, payload, { root: true }) as any;
+          };
+        }
+
+        return Reflect.get(target, prop, receiver);
+      },
+    });
+  }
+
+  get [staticMutations]() {
+    const methodNames = Object.getOwnPropertyNames(Object.getPrototypeOf(this)).filter(name => name !== 'constructor');
+    const result: StaticGetters = {};
+
+    for (const name of methodNames) {
+      const proto = Object.getPrototypeOf(this);
+      const unwrappedProxy = Object.create(proto);
+
+      result[name] = (vuexState, payload) => {
+        const mutContext = new Proxy(unwrappedProxy, {
+          get: (target, prop, reciever) => {
+            if (prop === state) return vuexState;
+            return Reflect.get(target, prop, reciever);
+          },
+        });
+
+        (mutContext as any)[name](payload);
+      };
+    }
+
+    return result;
+  }
+
   [state]: ModuleState;
   [key: string]: (payload?: any) => void;
 }
@@ -30,6 +112,55 @@ export abstract class ModuleMutations<ModuleState> {
 // --- Actions -------------------------------------------------------------- //
 
 export abstract class ModuleActions<ModuleState, RootState> {
+  constructor(parentModule: VuexTsModule<ModuleState, RootState, any, any, any>) {
+    return new Proxy(this, {
+      get: (target, prop, receiver) => {
+        if (typeof prop !== 'symbol') {
+          if (!moduleIsBound(parentModule)) {
+            throw new Error(
+              `You must register '${parentModule.name}' to a Vuex store before accessing mutations. Call '${
+                parentModule.name
+              }.register(store)'`,
+            );
+          }
+
+          return (payload: any) => {
+            return getStore(parentModule).dispatch(`${parentModule.namespacedKey}/${prop}`, payload, {
+              root: true,
+            }) as any;
+          };
+        }
+
+        return Reflect.get(target, prop, receiver);
+      },
+    });
+  }
+
+  get [staticActions]() {
+    const methodNames = Object.getOwnPropertyNames(Object.getPrototypeOf(this)).filter(name => name !== 'constructor');
+    const result: StaticGetters = {};
+
+    for (const name of methodNames) {
+      const proto = Object.getPrototypeOf(this);
+      const unwrappedProxy = Object.create(proto);
+
+      result[name] = async (vuexContext, payload) => {
+        const actContext = new Proxy(unwrappedProxy, {
+          get: (target, prop, reciever) => {
+            if (prop === context) return vuexContext;
+            if (prop === state) return vuexContext.state;
+            if (prop === rootState) return vuexContext.rootState;
+            return Reflect.get(target, prop, reciever);
+          },
+        });
+
+        return (actContext as any)[name](payload);
+      };
+    }
+
+    return result;
+  }
+
   [state]: ModuleState;
   [rootState]: RootState;
   [context]: ActionContext<ModuleState, RootState>;
@@ -48,15 +179,14 @@ export class VuexTsModule<
   readonly id: symbol;
   readonly name: string;
   readonly modules: VuexTsModule<any, RootState, any, any, any>[];
-  readonly getters: MappedGetters<Getters>;
+  readonly getters: Getters;
   readonly staticGetters: StaticGetters;
   readonly staticMutations: StaticMutations;
-  readonly mappedMutations: MappedMutations<Mutations>;
   readonly staticActions: StaticActions;
-  readonly mappedActions: MappedActions<Actions>;
   readonly initialState: ModuleState | undefined;
-  readonly commit: CommitFunc<Mutations> & MappedMutations<Mutations>;
-  readonly dispatch: DispatchFunc<Actions> & MappedActions<Actions>;
+  readonly commit: CommitFunc<Mutations> & Mutations;
+  readonly dispatch: DispatchFunc<Actions> & Actions;
+  readonly test: Getters;
 
   constructor({
     name: moduleName,
@@ -78,110 +208,52 @@ export class VuexTsModule<
     this.name = moduleName;
     this.id = Symbol(this.name);
     this.modules = modules || [];
-    this.getters = {} as any;
-    this.staticGetters = {};
-    this.mappedMutations = {} as any;
-    this.staticMutations = {};
-    this.mappedActions = {} as any;
-    this.staticActions = {};
     if (moduleState) this.initialState = moduleState;
 
     // --- Build strongly-typed getters --- //
 
     if (getters) {
-      const getInst = new getters();
-      const getNames = Object.getOwnPropertyNames(Object.getPrototypeOf(getInst)).filter(
-        name => name !== 'constructor',
-      );
-
-      for (const name of getNames) {
-        const isComputedGetter = Boolean(Object.getOwnPropertyDescriptor(Object.getPrototypeOf(getInst), name)!.get);
-
-        this.staticGetters[name] = (vuexState, vuexRootState) => {
-          const getContext = new Proxy(getInst, {
-            get: (target, prop, reciever) => {
-              if (prop === state) return vuexState;
-              if (prop === rootState) return vuexRootState;
-              return Reflect.get(target, prop, reciever);
-            },
-          });
-
-          return isComputedGetter ? (getContext as any)[name] : (getContext as any)[name].bind(getContext);
-        };
-
-        Object.defineProperty(this.getters, name, {
-          get: () => getStore(this).getters[`${this.namespacedKey}/${name}`],
-        });
-      }
+      this.getters = new getters(this);
+      this.staticGetters = this.getters[staticGetters];
     }
 
     // --- Build strongly-typed mutations --- //
 
     if (mutations) {
-      const mutInst = new mutations();
-      const mutNames = Object.getOwnPropertyNames(Object.getPrototypeOf(mutInst)).filter(
-        name => name !== 'constructor',
-      );
+      const mutInst = new mutations(this);
+      this.staticMutations = mutInst[staticMutations];
 
-      for (const name of mutNames) {
-        this.staticMutations[name] = (vuexState, payload) => {
-          const mutContext = new Proxy(mutInst, {
-            get: (target, prop, reciever) => {
-              if (prop === state) return vuexState;
-              return Reflect.get(target, prop, reciever);
-            },
-          });
+      const commitFunc: CommitFunc<Mutations> = (mutationName, ...payload) => {
+        (mutInst as any)[mutationName](...payload);
+      };
 
-          (mutContext as any)[name](payload);
-        };
+      const mappedMutations: any = {};
 
-        (this.mappedMutations as any)[name] = (payload: any) => {
-          getStore(this).commit(`${this.namespacedKey}/${name}`, payload, { root: true }) as any;
-        };
+      for (const handler of Object.keys(this.staticMutations)) {
+        mappedMutations[handler] = (...payload: any[]) => mutInst[handler](...payload);
       }
+
+      this.commit = Object.assign(commitFunc, mappedMutations);
     }
 
     // --- Build strongly-typed actions --- //
 
     if (actions) {
-      const actInst = new actions();
-      const actNames = Object.getOwnPropertyNames(Object.getPrototypeOf(actInst)).filter(
-        name => name !== 'constructor',
-      );
+      const actInst = new actions(this);
+      this.staticActions = actInst[staticActions];
 
-      for (const name of actNames) {
-        this.staticActions[name] = async (vuexContext, payload) => {
-          const actContext = new Proxy(actInst, {
-            get: (target, prop, reciever) => {
-              if (prop === context) return vuexContext;
-              if (prop === state) return vuexContext.state;
-              if (prop === rootState) return vuexContext.rootState;
-              return Reflect.get(target, prop, reciever);
-            },
-          });
+      const dispatchFunc: DispatchFunc<Actions> = (actionName, ...payload) => {
+        return (actInst as any)[actionName](...payload);
+      };
 
-          return (actContext as any)[name](payload);
-        };
+      const mappedActions: any = {};
 
-        (this.mappedActions as any)[name] = (payload: any) => {
-          return getStore(this).dispatch(`${this.namespacedKey}/${name}`, payload, { root: true }) as any;
-        };
+      for (const handler of Object.keys(this.staticActions)) {
+        mappedActions[handler] = (...payload: any[]) => actInst[handler](...payload);
       }
+
+      this.dispatch = Object.assign(dispatchFunc, mappedActions);
     }
-
-    // --- Build commit/dispatch methods --- //
-    // We combine these methods with a tree of mapped mutations/actions to
-    // provide an optional, more TypeScript-friendly interface.
-
-    const commitFunc: CommitFunc<Mutations> = (mutationName, ...payload) => {
-      (this.mappedMutations as any)[mutationName](...payload);
-    };
-    this.commit = Object.assign(commitFunc, this.mappedMutations);
-
-    const dispatchFunc: DispatchFunc<Actions> = (actionName, ...payload) => {
-      return (this.mappedActions as any)[actionName](...payload);
-    };
-    this.dispatch = Object.assign(dispatchFunc, this.mappedActions);
   }
 
   // --- Vuex-related props/methods ----------------------------------------- //

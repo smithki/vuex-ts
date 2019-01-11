@@ -1,6 +1,6 @@
 {
   "name": "vuex-ts",
-  "version": "2.0.4",
+  "version": "2.0.5",
   "description": "Strongly-typed Vuex store modules with an intuitive, incrementally-adoptable pattern.",
   "author": "Ian K Smith <smithki707@gmail.com>",
   "license": "MIT",

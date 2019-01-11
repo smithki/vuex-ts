@@ -21,7 +21,7 @@ export type StaticGetters = { [key: string]: (vuexState: any, vuexRootState: any
 
 export type StaticMutations = { [key: string]: (vuexState: any, payload: any) => void };
 export type CommitFunc<T extends ModuleMutations<any>> = (
-  mutationName: Exclude<KnownKeys<T>, typeof state>,
+  mutationName: Exclude<KnownKeys<T>, symbol>,
   ...payload: ArgumentTypes<T[typeof mutationName]>
 ) => void;
 
@@ -30,6 +30,6 @@ export type CommitFunc<T extends ModuleMutations<any>> = (
 export type StaticActions = { [key: string]: (vuexContext: ActionContext<any, any>, payload: any) => Promise<any> };
 
 export type DispatchFunc<T extends ModuleActions<any, any>> = (
-  actionName: Exclude<KnownKeys<T>, typeof context | typeof state | typeof rootState>,
+  actionName: Exclude<KnownKeys<T>, symbol>,
   ...payload: ArgumentTypes<T[typeof actionName]>
 ) => ReturnType<T[typeof actionName]>;

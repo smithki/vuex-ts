@@ -23,7 +23,8 @@
     "clean": "npm-run-all -s clean:*",
     "clean:dist": "rimraf dist && rimraf coverage",
     "clean:example-dist": "rimraf example-dist",
-    "clean:cache": "rimraf .rts2_cache_* .cache"
+    "clean:cache": "rimraf .rts2_cache_* .cache",
+    "prepublishOnly": "npm run build"
   },
   "peerDependencies": {
     "vuex": "^3.0.1"

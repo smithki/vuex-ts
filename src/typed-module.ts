@@ -66,7 +66,7 @@ export abstract class ModuleMutations<ModuleState> {
         if (typeof prop !== 'symbol') {
           if (!moduleIsBound(parentModule)) {
             throw new Error(
-              `You must register '${parentModule.name}' to a Vuex store before accessing mutations. Call '${
+              `You must register '${parentModule.name}' to a Vuex store before committing mutations. Call '${
                 parentModule.name
               }.register(store)'`,
             );
@@ -118,7 +118,7 @@ export abstract class ModuleActions<ModuleState, RootState> {
         if (typeof prop !== 'symbol') {
           if (!moduleIsBound(parentModule)) {
             throw new Error(
-              `You must register '${parentModule.name}' to a Vuex store before accessing mutations. Call '${
+              `You must register '${parentModule.name}' to a Vuex store before dispatching actions. Call '${
                 parentModule.name
               }.register(store)'`,
             );
@@ -262,8 +262,7 @@ export class VuexTsModule<
   get state(): ModuleState {
     if (moduleIsBound(this)) {
       const modulePath = this.namespacedKey.split('/');
-      const store = getStore(this);
-      let stateObj = store.state;
+      let stateObj = getStore(this).state;
 
       for (const part of modulePath) {
         stateObj = stateObj[part];
@@ -272,10 +271,9 @@ export class VuexTsModule<
       return stateObj;
     }
 
+    // Raise an error is this module is not bound to a store yet.
     throw new Error(
-      `Module '${this.name}' is not registered to a Vuex store. Call '${
-        this.name
-      }.register()' before attempting to access state.`,
+      `Module '${this.name}' is not registered to a Vuex store. Call '${this.name}.register()' before accessing state.`,
     );
   }
 

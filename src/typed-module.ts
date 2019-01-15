@@ -187,7 +187,7 @@ export class VuexTsModule<
   readonly id: symbol;
   readonly name: string;
   readonly modules: VuexTsModule<any, RootState, any, any, any>[];
-  readonly getters: MappedKnownKeys<Getters>;
+  readonly getters: Getters;
   readonly staticGetters: StaticGetters;
   readonly staticMutations: StaticMutations;
   readonly staticActions: StaticActions;

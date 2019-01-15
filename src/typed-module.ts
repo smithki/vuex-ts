@@ -1,7 +1,15 @@
 import { ActionContext, Module, Store } from 'vuex';
 import { bindModuleToStore, getStore, moduleIsBound, qualifyNamespace, unbindModuleFromStore } from './lib';
 import { context, rootState, state, staticActions, staticGetters, staticMutations } from './symbols';
-import { CommitFunc, ConstructorOf, DispatchFunc, StaticActions, StaticGetters, StaticMutations } from './types';
+import {
+  CommitFunc,
+  ConstructorOf,
+  DispatchFunc,
+  MappedKnownKeys,
+  StaticActions,
+  StaticGetters,
+  StaticMutations,
+} from './types';
 
 // --- Getters -------------------------------------------------------------- //
 
@@ -179,13 +187,13 @@ export class VuexTsModule<
   readonly id: symbol;
   readonly name: string;
   readonly modules: VuexTsModule<any, RootState, any, any, any>[];
-  readonly getters: Getters;
+  readonly getters: MappedKnownKeys<Getters>;
   readonly staticGetters: StaticGetters;
   readonly staticMutations: StaticMutations;
   readonly staticActions: StaticActions;
   readonly initialState: ModuleState | undefined;
-  readonly commit: CommitFunc<Mutations> & Mutations;
-  readonly dispatch: DispatchFunc<Actions> & Actions;
+  readonly commit: CommitFunc<Mutations> & MappedKnownKeys<Mutations>;
+  readonly dispatch: DispatchFunc<Actions> & MappedKnownKeys<Actions>;
   readonly test: Getters;
 
   constructor({

@@ -11,6 +11,7 @@ export type KnownKeys<T> = { [K in keyof T]: string extends K ? never : number e
 }
   ? U
   : never;
+export type MappedKnownKeys<T> = Pick<T, Exclude<KnownKeys<T>, symbol>>;
 export type ReturnTypeOrPlainProperty<T> = T extends (...args: any[]) => any ? ReturnType<T> : T;
 
 // --- Getters -------------------------------------------------------------- //
@@ -28,7 +29,6 @@ export type CommitFunc<T extends ModuleMutations<any>> = (
 // --- Actions -------------------------------------------------------------- //
 
 export type StaticActions = { [key: string]: (vuexContext: ActionContext<any, any>, payload: any) => Promise<any> };
-
 export type DispatchFunc<T extends ModuleActions<any, any>> = (
   actionName: Exclude<KnownKeys<T>, symbol>,
   ...payload: ArgumentTypes<T[typeof actionName]>

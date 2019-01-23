@@ -100,7 +100,7 @@ And for `mutations`:
 import { ModuleMutations, state } from 'vuex-ts';
 import { MyModuleState } from './myModule.model';
 
-export class MyModuleGetters extends ModuleMutations<MyModuleState> {
+export class MyModuleMutations extends ModuleMutations<MyModuleState> {
   // Define your mutation handlers as methods that accept one argument
   // (the "payload"). It's type signature will carry over to your module and
   // enforce typing accordingly.
@@ -117,7 +117,7 @@ import { ModuleActions, state } from 'vuex-ts';
 import { MyModuleState } from './myModule.model';
 import { RootState } from '../path/to/root-model';
 
-export class MyModuleGetters extends ModuleActions<MyModuleState, RootState> {
+export class MyModuleActions extends ModuleActions<MyModuleState, RootState> {
   // Define your action handlers as asynchronous methods that accept one
   // argument (the "payload"). It's type signature will carry over to your
   // module and enforce typing accordingly.

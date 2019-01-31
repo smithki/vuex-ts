@@ -86,7 +86,7 @@ export class MyModuleGetters extends ModuleGetters<MyModuleState, RootState> {
     return `${this[state].greeting} world!`;
   }
 
-  // If your handler returns a function, define it as a method. It's type
+  // If your handler returns a function, define it as a method. Its type
   // signature will carry over to your module and enforce typing accordingly.
   helloPerson(name: string) {
     return `${this[state].greeting}, ${name}!`;
@@ -102,7 +102,7 @@ import { MyModuleState } from './myModule.model';
 
 export class MyModuleMutations extends ModuleMutations<MyModuleState> {
   // Define your mutation handlers as methods that accept one argument
-  // (the "payload"). It's type signature will carry over to your module and
+  // (the "payload"). Its type signature will carry over to your module and
   // enforce typing accordingly.
   setGreeting(newGreeting: string) {
     this[state].greeting = newGreeting;
@@ -119,7 +119,7 @@ import { RootState } from '../path/to/root-model';
 
 export class MyModuleActions extends ModuleActions<MyModuleState, RootState> {
   // Define your action handlers as asynchronous methods that accept one
-  // argument (the "payload"). It's type signature will carry over to your
+  // argument (the "payload"). Its type signature will carry over to your
   // module and enforce typing accordingly.
   //
   // Action handlers can optionally return a value!

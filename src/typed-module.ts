@@ -526,7 +526,7 @@ export class VuexTsModuleBuilder<ModuleState, RootState> {
 // --- VuexTsModule Factory ------------------------------------------------- //
 
 /**
- * Create an instnace VuexTSModuleBuilder.
+ * Create an instance VuexTSModuleBuilder.
  *
  * @example
  * // Compose your module:

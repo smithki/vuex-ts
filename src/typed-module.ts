@@ -1,7 +1,19 @@
-import { ActionContext, Module, Store } from 'vuex';
+import { ActionContext, Module, Store, StoreOptions } from 'vuex';
 import { bindModuleToStore, getStore, moduleIsBound, qualifyNamespace, unbindModuleFromStore } from './lib';
-import { context, rootState, state, staticActions, staticChildren, staticGetters, staticMutations } from './symbols';
 import {
+  context,
+  id,
+  initialState,
+  rootState,
+  state,
+  staticActions,
+  staticChildren,
+  staticGetters,
+  staticMutations,
+  vuexModule,
+} from './symbols';
+import {
+  ChildState,
   CommitFunc,
   ConstructorOf,
   DispatchFunc,
@@ -27,7 +39,7 @@ export abstract class ModuleGetters<ModuleState, RootState> {
             );
           }
 
-          return getStore(parentModule).getters[`${parentModule.namespacedKey}/${prop}`];
+          return getStore(parentModule).getters[`${parentModule.namespaceKey}/${prop}`];
         }
 
         return Reflect.get(target, prop, receiver);
@@ -82,7 +94,7 @@ export abstract class ModuleMutations<ModuleState> {
           }
 
           return (payload: any) => {
-            getStore(parentModule).commit(`${parentModule.namespacedKey}/${prop}`, payload, { root: true }) as any;
+            getStore(parentModule).commit(`${parentModule.namespaceKey}/${prop}`, payload, { root: true }) as any;
           };
         }
 
@@ -134,7 +146,7 @@ export abstract class ModuleActions<ModuleState, RootState> {
           }
 
           return (payload: any) => {
-            return getStore(parentModule).dispatch(`${parentModule.namespacedKey}/${prop}`, payload, {
+            return getStore(parentModule).dispatch(`${parentModule.namespaceKey}/${prop}`, payload, {
               root: true,
             }) as any;
           };
@@ -203,16 +215,54 @@ export class VuexTsModule<
   Actions extends ModuleActions<ModuleState, RootState>,
   Modules extends ModuleChildren
 > {
-  readonly id: symbol;
+  readonly [id]: symbol;
+  readonly [staticGetters]: StaticGetters;
+  readonly [staticMutations]: StaticMutations;
+  readonly [staticActions]: StaticActions;
+  readonly [staticChildren]: StaticChildren | undefined;
+  readonly [initialState]: ModuleState | undefined;
+
+  /**
+   * This module's name.
+   *
+   * @type {string}
+   * @memberof VuexTsModule
+   */
   readonly name: string;
+
+  /**
+   * Dynamic getters registered in this modules.
+   *
+   * @type {Getters}
+   * @memberof VuexTsModule
+   */
   readonly getters: Getters;
-  readonly staticGetters: StaticGetters;
-  readonly staticMutations: StaticMutations;
-  readonly staticActions: StaticActions;
-  readonly staticChildren?: StaticChildren;
-  readonly initialState: ModuleState | undefined;
+
+  /**
+   * Commit mutations registered in this module.
+   *
+   * @type {(CommitFunc<Mutations> & MappedKnownKeys<Mutations>)}
+   * @memberof VuexTsModule
+   */
   readonly commit: CommitFunc<Mutations> & MappedKnownKeys<Mutations>;
+
+  /**
+   * Dispatch actions registered in this module.
+   *
+   * @type {(DispatchFunc<Actions> & MappedKnownKeys<Actions>)}
+   * @memberof VuexTsModule
+   */
   readonly dispatch: DispatchFunc<Actions> & MappedKnownKeys<Actions>;
+
+  /**
+   * Create a new VuexTsModule instance with the same getters, mutations,
+   * actions, and nested modules.
+   *
+   * @param {string} [name] - A new `name` for the created VuexTsModule to adopt.
+   * @returns {void}
+   * @memberof VuexTsModule
+   */
+  readonly clone: (name?: string) => VuexTsModule<ModuleState, RootState, Getters, Mutations, Actions, Modules>;
 
   constructor({
     name: moduleName,
@@ -232,21 +282,35 @@ export class VuexTsModule<
     // --- Initialize instance properties --- //
 
     this.name = moduleName;
-    this.id = Symbol(this.name);
-    if (moduleState) this.initialState = moduleState;
+    this[id] = Symbol(this.name);
+    if (moduleState) this[initialState] = moduleState;
+
+    // --- Build `clone(...)` method --- //
+
+    this.clone = name => {
+      return vuexTsBuilder<ModuleState, RootState>({
+        name: name || moduleName,
+        state: moduleState,
+      }).inject({
+        getters,
+        mutations,
+        actions,
+        modules,
+      });
+    };
 
     // --- Build strongly-typed getters --- //
 
     if (getters) {
       this.getters = new getters(this);
-      this.staticGetters = this.getters[staticGetters];
+      this[staticGetters] = this.getters[staticGetters];
     }
 
     // --- Build strongly-typed mutations --- //
 
     if (mutations) {
       const mutInst = new mutations(this);
-      this.staticMutations = mutInst[staticMutations];
+      this[staticMutations] = mutInst[staticMutations];
 
       const commitFunc: CommitFunc<Mutations> = (mutationName, ...payload) => {
         (mutInst as any)[mutationName](...payload);
@@ -254,7 +318,7 @@ export class VuexTsModule<
 
       const mappedMutations: any = {};
 
-      for (const handler of Object.keys(this.staticMutations)) {
+      for (const handler of Object.keys(this[staticMutations])) {
         mappedMutations[handler] = (...payload: any[]) => mutInst[handler](...payload);
       }
 
@@ -265,7 +329,7 @@ export class VuexTsModule<
 
     if (actions) {
       const actInst = new actions(this);
-      this.staticActions = actInst[staticActions];
+      this[staticActions] = actInst[staticActions];
 
       const dispatchFunc: DispatchFunc<Actions> = (actionName, ...payload) => {
         return (actInst as any)[actionName](...payload);
@@ -273,7 +337,7 @@ export class VuexTsModule<
 
       const mappedActions: any = {};
 
-      for (const handler of Object.keys(this.staticActions)) {
+      for (const handler of Object.keys(this[staticActions])) {
         mappedActions[handler] = (...payload: any[]) => actInst[handler](...payload);
       }
 
@@ -284,17 +348,23 @@ export class VuexTsModule<
 
     if (modules) {
       const children = new modules()[staticChildren];
-      this.staticChildren = children;
+      this[staticChildren] = children;
       return Object.assign(this, children);
     }
   }
 
   // --- Vuex-related props/methods ----------------------------------------- //
 
-  /** Get this module's state from its registered Vuex store. */
-  get state(): ModuleState {
+  /**
+   * This module's dynamic state.
+   *
+   * @readonly
+   * @type {(ModuleState & ChildState<Modules>)}
+   * @memberof VuexTsModule
+   */
+  get state(): ModuleState & ChildState<Modules> {
     if (moduleIsBound(this)) {
-      const modulePath = this.namespacedKey.split('/');
+      const modulePath = this.namespaceKey.split('/');
       let stateObj = getStore(this).state;
 
       for (const part of modulePath) {
@@ -314,29 +384,54 @@ export class VuexTsModule<
 
   // --- VuexTS-related utilities ------------------------------------------- //
 
-  /** Gets the stringified namespace key for this module. */
-  get namespacedKey() {
-    return qualifyNamespace(this);
+  /**
+   * The stringified namespace key for this VuexTsModule.
+   *
+   * @readonly
+   * @memberof VuexTsModule
+   */
+  get namespaceKey() {
+    if (moduleIsBound(this)) {
+      return qualifyNamespace(this);
+    }
+
+    throw new Error(
+      `Module '${this.name}' is not registered to a Vuex store. Call '${
+        this.name
+      }.register(store)' before accessing 'namespaceKey'.`,
+    );
   }
 
-  /** Gets the raw Vuex module. */
-  get vuexModule(): Module<ModuleState, RootState> {
+  /**
+   * The raw underlying Vuex module for this VuexTsModule.
+   *
+   * @readonly
+   * @type {Module<ModuleState, RootState>}
+   * @memberof VuexTsModule
+   */
+  get [vuexModule](): Module<ModuleState, RootState> {
     return {
       namespaced: true,
-      state: () => this.initialState || ({} as any),
-      getters: this.staticGetters,
-      mutations: this.staticMutations,
-      actions: this.staticActions,
+      state: () => this[initialState] || ({} as any),
+      getters: this[staticGetters],
+      mutations: this[staticMutations],
+      actions: this[staticActions],
     };
   }
 
-  /** Register this module to the provided Vuex store. */
+  /**
+   * Register this module to the provided Vuex store.
+   *
+   * @param {Store<RootState>} store - The Vuex store to bind this VuexTsModule to.
+   * @returns {void}
+   * @memberof VuexTsModule
+   */
   register(store: Store<RootState>): void {
     if (moduleIsBound(this)) {
       if (getStore(this) === store) {
         // If we are attempting to register to the same store, warn and skip the step.
         console.warn(
-          `Module '${this.namespacedKey}' is already registered to the provided store. There is no need to call '${
+          `Module '${this.namespaceKey}' is already registered to the provided store. There is no need to call '${
             this.name
           }.register()' again.`,
         );
@@ -345,7 +440,7 @@ export class VuexTsModule<
         // error and explain possible steps to resolve the issue.
         throw new Error(
           `Module '${
-            this.namespacedKey
+            this.namespaceKey
           }' is registered to another Vuex store. VuexTs modules can only be registered to one Vuex store at a time. You can unregister this module by calling '${
             this.name
           }.unregister()' or create a new module instance with 'createVuexTsModule(...)'.`,
@@ -358,16 +453,17 @@ export class VuexTsModule<
     bindModuleToStore(this, store);
   }
 
-  /** Unregister this module from its bound Vuex store. */
+  /**
+   * Unregister this module from its bound Vuex store.
+   *
+   * @memberof VuexTsModule
+   */
   unregister(): void {
-    unbindModuleFromStore(this);
+    if (moduleIsBound(this)) unbindModuleFromStore(this);
   }
 }
 
 // --- Builder -------------------------------------------------------------- //
-function tuple<T extends any[]>(...args: T): T {
-  return args;
-}
 
 export class VuexTsModuleBuilder<ModuleState, RootState> {
   readonly name: string;
@@ -378,6 +474,28 @@ export class VuexTsModuleBuilder<ModuleState, RootState> {
     this.state = state;
   }
 
+  /**
+   * Create a VuexTsModule with injected getters, mutations, actions, and child
+   * modules.
+   *
+   * @template Getters
+   * @template Mutations
+   * @template Actions
+   * @template Modules
+   * @param {{
+   *     getters?: ConstructorOf<Getters>;
+   *     mutations?: ConstructorOf<Mutations>;
+   *     actions?: ConstructorOf<Actions>;
+   *     modules?: ConstructorOf<Modules>;
+   *   }} [{
+   *     getters,
+   *     mutations,
+   *     actions,
+   *     modules,
+   *   }={}] - Configuration object containing getters, mutations, actions, and nested modules.
+   * @returns {(VuexTsModule<ModuleState, RootState, Getters, Mutations, Actions, Modules> & Modules)}
+   * @memberof VuexTsModuleBuilder
+   */
   inject<
     Getters extends ModuleGetters<ModuleState, RootState>,
     Mutations extends ModuleMutations<ModuleState>,

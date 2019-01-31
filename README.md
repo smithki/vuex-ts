@@ -1,4 +1,4 @@
-# VuexTs
+# 💪 VuexTs
 
 [![code style: airbnb](https://img.shields.io/badge/code%20style-airbnb-blue.svg?style=flat)](https://github.com/airbnb/javascript)
 [![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat)](https://github.com/prettier/prettier)
@@ -146,7 +146,7 @@ Nested modules are accessible from the top-level of their parent, like this:
 
 ```ts
 // It's just another instance of VuexTsModule,
-// so you have access to `commit`, `dispatch`, etc.
+// so you have access to `store`, `commit`, `dispatch`, etc.
 myModule.someNestedModule
 
 // You can also access nested state objects just as you would expect,

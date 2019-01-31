@@ -1,4 +1,4 @@
-import { ActionContext, Module, Store, StoreOptions } from 'vuex';
+import { ActionContext, Module, Store } from 'vuex';
 import { bindModuleToStore, getStore, moduleIsBound, qualifyNamespace, unbindModuleFromStore } from './lib';
 import {
   context,

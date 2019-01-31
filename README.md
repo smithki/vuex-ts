@@ -40,12 +40,15 @@ const initialMyModuleState: MyModuleState = {
   greeting: 'hello',
 };
 
-export const myModule = VuexTsBuilder<
+// vuexTsBuilder() wraps the module instantiation logic to enable
+// type inference of injected getters, mutations, actions,
+// and nested modules.
+export const myModule = vuexTsBuilder<
   MyModuleState,
   RootState,
 >({
   name: 'myModule', // Required.
-  state: initialMyModuleState,
+  state: initialMyModuleState, // Or use `() => initialMyModuleState` to make it reuseable.
 }).inject({
   getters: MyModuleGetters,
   mutations: MyModuleMutations,
@@ -54,7 +57,7 @@ export const myModule = VuexTsBuilder<
 });
 ```
 
-Before we can use this module we must register it to our Vuex store:
+Before we can use this module in our app we must register it to a Vuex store:
 
 ```ts
 import Vue from 'vue';
@@ -72,8 +75,8 @@ export const store = new Vuex.Store({
 
 // Alternatively, you can instantiate a Vuex store directly from the module:
 export const store = myModule.toStore({
-  plugins: [/* The same store options are available to you here... */]
-})
+  // The same store options are available to you here...
+});
 ```
 
 Now let's write our `getters`:

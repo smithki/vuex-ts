@@ -3,7 +3,7 @@
 [![code style: airbnb](https://img.shields.io/badge/code%20style-airbnb-blue.svg?style=flat)](https://github.com/airbnb/javascript)
 [![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat)](https://github.com/prettier/prettier)
 
-> Strongly-typed Vuex store modules with an intuitive, incrementally-adoptable pattern.
+> Strongly-typed Vuex modules built for high-complexity stores and high-scalability needs.
 
 ## 🔗 Installation
 

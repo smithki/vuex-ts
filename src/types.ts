@@ -1,4 +1,4 @@
-import { ActionContext } from 'vuex';
+import { ActionContext, Module } from 'vuex';
 import { ModuleActions, ModuleChildren, ModuleMutations, VuexTsModule } from './typed-module';
 
 // --- Helpers -------------------------------------------------------------- //
@@ -35,5 +35,5 @@ export type DispatchFunc<T extends ModuleActions<any, any>> = (
 
 // --- Nested modules ------------------------------------------------------- //
 
-export type StaticChildren = { [key: string]: VuexTsModule<any, any, any, any, any, any> };
+export type StaticChildren = { [key: string]: Module<any, any> };
 export type ChildState<T extends ModuleChildren> = { [P in keyof T]: T[P]['state'] };

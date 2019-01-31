@@ -1,5 +1,12 @@
-import { ActionContext, Module, Store } from 'vuex';
-import { bindModuleToStore, getStore, moduleIsBound, qualifyNamespace, unbindModuleFromStore } from './lib';
+import { ActionContext, Module, Store, StoreOptions } from 'vuex';
+import {
+  bindModuleToStore,
+  getStore,
+  moduleIsBound,
+  qualifyNamespace,
+  registerVuexTsModules,
+  unbindModuleFromStore,
+} from './lib';
 import {
   context,
   id,
@@ -11,6 +18,7 @@ import {
   staticGetters,
   staticMutations,
   vuexModule,
+  children,
 } from './symbols';
 import {
   ChildState,
@@ -113,9 +121,10 @@ export abstract class ModuleMutations<ModuleState> {
 
       result[name] = (vuexState, payload) => {
         const mutContext = new Proxy(unwrappedProxy, {
-          get: (target, prop, reciever) => {
+          get: (target, prop, receiver) => {
             if (prop === state) return vuexState;
-            return Reflect.get(target, prop, reciever);
+
+            return Reflect.get(target, prop, receiver);
           },
         });
 
@@ -191,18 +200,19 @@ export abstract class ModuleActions<ModuleState, RootState> {
 // --- Nested modules ------------------------------------------------------- //
 
 export abstract class ModuleChildren {
-  [key: string]: VuexTsModule<any, any, any, any, any, any>;
-
   get [staticChildren]() {
     const moduleNames = Object.getOwnPropertyNames(this);
     const result: StaticChildren = {};
 
     for (const name of moduleNames) {
-      result[name] = this[name].clone(name);
+      this[name] = this[name].clone(name);
+      result[name] = this[name][vuexModule];
     }
 
     return result;
   }
+
+  [key: string]: VuexTsModule<any, any, any, any, any, any>;
 }
 
 // --- Module --------------------------------------------------------------- //
@@ -220,7 +230,8 @@ export class VuexTsModule<
   readonly [staticMutations]: StaticMutations;
   readonly [staticActions]: StaticActions;
   readonly [staticChildren]: StaticChildren;
-  readonly [initialState]: ModuleState | undefined;
+  readonly [children]: VuexTsModule<any, any, any, any, any, any>[];
+  readonly [initialState]: ModuleState;
 
   /**
    * This module's name.
@@ -273,7 +284,7 @@ export class VuexTsModule<
     modules,
   }: {
     name: string;
-    state?: ModuleState;
+    state: ModuleState | (() => ModuleState);
     getters?: ConstructorOf<Getters>;
     mutations?: ConstructorOf<Mutations>;
     actions?: ConstructorOf<Actions>;
@@ -283,7 +294,7 @@ export class VuexTsModule<
 
     this.name = moduleName;
     this[id] = Symbol(this.name);
-    if (moduleState) this[initialState] = moduleState;
+    this[initialState] = typeof moduleState === 'function' ? (moduleState as any)() : moduleState;
 
     // --- Build `clone(...)` method --- //
 
@@ -347,12 +358,15 @@ export class VuexTsModule<
     // --- Build nested modules --- //
 
     if (modules) {
-      const children = new modules()[staticChildren];
-      this[staticChildren] = children;
-      return Object.assign(this, children);
+      const modInst = new modules()
+      const sc = modInst[staticChildren];
+      this[staticChildren] = sc;
+      this[children] = Object.values(modInst);
+      return Object.assign(this, modInst);
     }
 
     this[staticChildren] = {};
+    this[children] = [];
   }
 
   // --- Vuex-related props/methods ----------------------------------------- //
@@ -414,10 +428,11 @@ export class VuexTsModule<
   get [vuexModule](): Module<ModuleState, RootState> {
     return {
       namespaced: true,
-      state: () => this[initialState] || ({} as any),
+      state: () => this[initialState],
       getters: this[staticGetters],
       mutations: this[staticMutations],
       actions: this[staticActions],
+      modules: this[staticChildren],
     };
   }
 
@@ -463,15 +478,29 @@ export class VuexTsModule<
   unregister(): void {
     if (moduleIsBound(this)) unbindModuleFromStore(this);
   }
+
+  /**
+   * Create a Vuex store instance from this VuexTsModule. Nested modules are
+   * automatically registered using this method.
+   *
+   * @param options - Same options you would provide to `new Vuex.Store({ ...
+   * })`.
+   */
+  toStore(options: StoreOptions<RootState> = {}): Store<RootState & ChildState<Modules>> {
+    const registration = [registerVuexTsModules(this)];
+    if (options.plugins && Array.isArray(options.plugins)) options.plugins.unshift(...registration);
+    else options.plugins = registration;
+    return new Store(options) as any;
+  }
 }
 
 // --- Builder -------------------------------------------------------------- //
 
 export class VuexTsModuleBuilder<ModuleState, RootState> {
   readonly name: string;
-  readonly state: ModuleState;
+  readonly state: ModuleState | (() => ModuleState);
 
-  constructor({ name, state }: { name: string; state: ModuleState }) {
+  constructor({ name, state }: { name: string; state: ModuleState | (() => ModuleState) }) {
     this.name = name;
     this.state = state;
   }
@@ -528,7 +557,8 @@ export class VuexTsModuleBuilder<ModuleState, RootState> {
 // --- VuexTsModule Factory ------------------------------------------------- //
 
 /**
- * Create an instance VuexTSModuleBuilder.
+ * Create an instance of VuexTSModuleBuilder. This class wraps the instantiation
+ * of VuexTsModule to enable better type inference.
  *
  * @example
  * // Compose your module:
@@ -547,13 +577,16 @@ export class VuexTsModuleBuilder<ModuleState, RootState> {
  *
  * // Likewise, you can unregister your module:
  * myModule.unregister();
+ *
+ * // Or create the Vuex store directly from the module:
+ * myModule.toStore();
  */
 export function vuexTsBuilder<ModuleState, RootState>({
   name,
   state,
 }: {
   name: string;
-  state?: ModuleState;
+  state?: ModuleState | (() => ModuleState);
 }): VuexTsModuleBuilder<ModuleState, RootState> {
   return new VuexTsModuleBuilder<ModuleState, RootState>({
     name,

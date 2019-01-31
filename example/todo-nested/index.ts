@@ -1,8 +1,6 @@
 import { VuexTsModule } from '../../src';
-import { ModuleGetters, vuexTsBuilder } from '../../src/typed-module';
-import { todoNested } from '../todo-nested';
+import { vuexTsBuilder } from '../../src/typed-module';
 import { TodoActions } from './todo.actions';
-import { TodoChildren } from './todo.children';
 import { TodoGetters } from './todo.getters';
 import { TodoState } from './todo.model';
 import { TodoMutations } from './todo.mutations';
@@ -17,8 +15,8 @@ import { TodoMutations } from './todo.mutations';
 //   actions: TodoActions,
 // });
 
-export const todo = vuexTsBuilder<TodoState, any>({
-  name: 'todo',
+export const todoNested = vuexTsBuilder<TodoState, any>({
+  name: 'todo-nested',
   state: {
     todos: [],
   },
@@ -26,5 +24,4 @@ export const todo = vuexTsBuilder<TodoState, any>({
   getters: TodoGetters,
   mutations: TodoMutations,
   actions: TodoActions,
-  modules: TodoChildren,
 });

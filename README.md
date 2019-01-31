@@ -23,7 +23,7 @@ npm install vuex-ts
 
 ### Creating a basic module
 
-VuexTs has a simple API consisting of two functions: `vuexTsBuilder` and `registerVuexTsModules`. The rest is a just a pattern to ensure strong-typing, enforced by abstract TypeScript classes and supported by Symbol-based access to contextual `state`, `rootState`, and other features of Vuex from within your getter, mutation, and action handlers. If you're familiar with Redux, some of this pattern may already be familiar.
+VuexTs has a simple API consisting of two functions: `vuexTsBuilder` and `registerVuexTsModules`. The rest is a just a pattern to ensure strong-typing, enforced by abstract TypeScript classes and supported by Symbol-based access to contextual `state`, `rootState`, and other features of Vuex from within your getter, mutation, and action handlers. If you're familiar with Redux, some of this pattern will be familiar, too.
 
 Let's start with a basic example:
 
@@ -71,7 +71,7 @@ export const store = new Vuex.Store({
 });
 ```
 
-Now lets write our `getters`:
+Now let's write our `getters`:
 
 ```ts
 import { ModuleGetters, state } from 'vuex-ts';
@@ -154,7 +154,7 @@ myModule.someNestedModule
 myModule.state.someNestedModule
 ```
 
-That's all there is to it! You can choose to separate actions/mutations/getters across files or consolidate, but as your app scales managing these concerns separately is highly recommended!
+That's all there is to it! Naturally, you can choose to separate actions/mutations/getters across files or consolidate. A separation of concerns alongside strong typing is what makes VuexTs work well at scale!
 
 For a working example, see [`./example`](./example);
 

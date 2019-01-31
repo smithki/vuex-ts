@@ -1,4 +1,4 @@
-import { ModuleChildren, ModuleGetters, ModuleMutations, state, vuexTsBuilder } from '../src';
+import { ModuleChildren, ModuleGetters, ModuleMutations, state, vuexTsBuilder, VuexTsModule } from '../src';
 import { doggoState } from './doggos';
 
 export enum KittenBreed {
@@ -36,7 +36,7 @@ class KittenMutations extends ModuleMutations<KittenState> {
 // --- Nested modules --- //
 
 class KittenChildren extends ModuleChildren {
-  doggoNested = doggoState;
+  doggoNested = () => doggoState;
 }
 
 // --- Module --- //

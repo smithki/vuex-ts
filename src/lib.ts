@@ -1,6 +1,7 @@
 import { Store } from 'vuex';
-import { id, vuexModule, children } from './symbols';
+import { children, id, vuexModule } from './symbols';
 import { VuexTsModule } from './typed-module';
+import { CompositeVuexTsModule } from './types';
 
 // --- Constants ------------------------------------------------------------ //
 
@@ -15,15 +16,15 @@ export function qualifyNamespace(mod: VuexTsModule<any, any, any, any, any, any>
 }
 
 /** Bind a VuexTs module to a Vuex store instance. */
-export function bindModuleToStore<RootState>(
+export function bindModuleToStore(
   mod: VuexTsModule<any, any, any, any, any, any>,
-  store: Store<RootState>,
+  store: Store<any>,
   parentModuleNames: string[] = [],
 ) {
   if (!vuexTsNamespaceCache.has(mod[id])) vuexTsNamespaceCache.set(mod[id], [...parentModuleNames, mod.name]);
   if (!parentModuleNames.length) store.registerModule(vuexTsNamespaceCache.get(mod[id])!, mod[vuexModule]);
   vuexTsStoreCache.set(mod[id], store);
-  for (const m of mod[children]) {
+  for (const m of Object.values(mod[children])) {
     bindModuleToStore(m, store, [...vuexTsNamespaceCache.get(mod[id])!]);
   }
 }
@@ -33,7 +34,7 @@ export function unbindModuleFromStore(mod: VuexTsModule<any, any, any, any, any,
   getStore(mod).unregisterModule(vuexTsNamespaceCache.get(mod[id])!);
   vuexTsStoreCache.delete(mod[id]);
   vuexTsNamespaceCache.delete(mod[id]);
-  for (const m of mod[children]) unbindModuleFromStore(m);
+  for (const m of Object.values(mod[children])) unbindModuleFromStore(m);
 }
 
 /** Check if a module is already bound to a store. */
@@ -55,7 +56,9 @@ export function getStore(mod: VuexTsModule<any, any, any, any, any, any>): Store
  *   plugins: [registerVuexTsModules(...vuexTsModules)],
  * });
  */
-export function registerVuexTsModules<RootState>(...vuexTsModules: VuexTsModule<any, RootState, any, any, any, any>[]) {
+export function registerVuexTsModules<RootState>(
+  ...vuexTsModules: CompositeVuexTsModule<any, RootState, any, any, any, any>[]
+) {
   return (store: Store<RootState>) => {
     vuexTsModules.forEach(mod => mod.register(store));
   };

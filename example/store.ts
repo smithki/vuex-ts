@@ -1,5 +1,5 @@
 import Vue from 'vue';
-import Vuex, { Store } from 'vuex';
+import Vuex from 'vuex';
 import { registerVuexTsModules } from '../src';
 import { DoggoBreed, doggoState } from './doggos';
 import { KittenBreed, kittenState } from './kittens';

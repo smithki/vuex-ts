@@ -8,6 +8,7 @@ import {
   unbindModuleFromStore,
 } from './lib';
 import {
+  children,
   context,
   id,
   initialState,
@@ -18,14 +19,16 @@ import {
   staticGetters,
   staticMutations,
   vuexModule,
-  children,
 } from './symbols';
 import {
   ChildState,
   CommitFunc,
+  CompositeVuexTsModule,
   ConstructorOf,
   DispatchFunc,
+  KnownKeys,
   MappedKnownKeys,
+  MappedModuleChildren,
   StaticActions,
   StaticChildren,
   StaticGetters,
@@ -201,18 +204,21 @@ export abstract class ModuleActions<ModuleState, RootState> {
 
 export abstract class ModuleChildren {
   get [staticChildren]() {
-    const moduleNames = Object.getOwnPropertyNames(this);
+    const moduleNames = [
+      ...Object.getOwnPropertyNames(this),
+      ...Object.getOwnPropertyNames(Object.getPrototypeOf(this)).filter(name => name !== 'constructor'),
+    ];
     const result: StaticChildren = {};
 
     for (const name of moduleNames) {
-      this[name] = this[name].clone(name);
-      result[name] = this[name][vuexModule];
+      this[name] = (this[name] as any)().clone(name);
+      result[name] = (this[name] as any)[vuexModule];
     }
 
     return result;
   }
 
-  [key: string]: VuexTsModule<any, any, any, any, any, any>;
+  [key: string]: () => CompositeVuexTsModule<any, any, any, any, any, any>;
 }
 
 // --- Module --------------------------------------------------------------- //
@@ -230,7 +236,7 @@ export class VuexTsModule<
   readonly [staticMutations]: StaticMutations;
   readonly [staticActions]: StaticActions;
   readonly [staticChildren]: StaticChildren;
-  readonly [children]: VuexTsModule<any, any, any, any, any, any>[];
+  readonly [children]: MappedModuleChildren<Modules>;
   readonly [initialState]: ModuleState;
 
   /**
@@ -273,7 +279,9 @@ export class VuexTsModule<
    * @returns {void}
    * @memberof VuexTsModule
    */
-  readonly clone: (name?: string) => VuexTsModule<ModuleState, RootState, Getters, Mutations, Actions, Modules>;
+  readonly clone: (
+    name?: string,
+  ) => CompositeVuexTsModule<ModuleState, RootState, Getters, Mutations, Actions, Modules>;
 
   constructor({
     name: moduleName,
@@ -358,15 +366,14 @@ export class VuexTsModule<
     // --- Build nested modules --- //
 
     if (modules) {
-      const modInst = new modules()
+      const modInst = new modules();
       const sc = modInst[staticChildren];
       this[staticChildren] = sc;
-      this[children] = Object.values(modInst);
-      return Object.assign(this, modInst);
+      this[children] = modInst as any;
+      return Object.assign(this, modInst as MappedModuleChildren<Modules>);
     }
 
-    this[staticChildren] = {};
-    this[children] = [];
+    this[staticChildren] = this[children] = {} as any;
   }
 
   // --- Vuex-related props/methods ----------------------------------------- //
@@ -542,7 +549,7 @@ export class VuexTsModuleBuilder<ModuleState, RootState> {
     mutations?: ConstructorOf<Mutations>;
     actions?: ConstructorOf<Actions>;
     modules?: ConstructorOf<Modules>;
-  } = {}): VuexTsModule<ModuleState, RootState, Getters, Mutations, Actions, Modules> & Modules {
+  } = {}): CompositeVuexTsModule<ModuleState, RootState, Getters, Mutations, Actions, Modules> {
     return new VuexTsModule<ModuleState, RootState, Getters, Mutations, Actions, Modules>({
       getters,
       mutations,

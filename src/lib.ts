@@ -9,41 +9,43 @@ const vuexTsNamespaceCache = new Map<symbol, string[]>();
 // --- Business logic ------------------------------------------------------- //
 
 /** Generate a namespace key for use in Vuex `dispatch` and `commit` method arguments. */
-export function qualifyNamespace(mod: VuexTsModule<any, any, any, any, any>): string {
+export function qualifyNamespace(mod: VuexTsModule<any, any, any, any, any, any>): string {
   return vuexTsNamespaceCache.has(mod.id) ? `${vuexTsNamespaceCache.get(mod.id)!.join('/')}` : mod.name;
 }
 
 /** Bind a VuexTs module to a Vuex store instance. */
 export function bindModuleToStore<RootState>(
-  mod: VuexTsModule<any, any, any, any, any>,
+  mod: VuexTsModule<any, any, any, any, any, any>,
   store: Store<RootState>,
   parentModuleNames: string[] = [],
 ) {
   if (!vuexTsNamespaceCache.has(mod.id)) vuexTsNamespaceCache.set(mod.id, [...parentModuleNames, mod.name]);
   store.registerModule(vuexTsNamespaceCache.get(mod.id)!, mod.vuexModule);
   vuexTsStoreCache.set(mod.id, store);
-  if (mod.modules) {
-    for (const m of mod.modules) bindModuleToStore(m, store, [...vuexTsNamespaceCache.get(mod.id)!]);
+  if (mod.staticChildren) {
+    for (const m of Object.values(mod.staticChildren)) {
+      bindModuleToStore(m, store, [...vuexTsNamespaceCache.get(mod.id)!]);
+    }
   }
 }
 
 /** Unbind a VuexTs module from its currently bound Vuex store instance. */
-export function unbindModuleFromStore(mod: VuexTsModule<any, any, any, any, any>) {
+export function unbindModuleFromStore(mod: VuexTsModule<any, any, any, any, any, any>) {
   getStore(mod).unregisterModule(vuexTsNamespaceCache.get(mod.id)!);
   vuexTsStoreCache.delete(mod.id);
   vuexTsNamespaceCache.delete(mod.id);
-  if (mod.modules) {
-    for (const m of mod.modules) unbindModuleFromStore(m);
+  if (mod.staticChildren) {
+    for (const m of Object.values(mod.staticChildren)) unbindModuleFromStore(m);
   }
 }
 
 /** Check if a module is already bound to a store. */
-export function moduleIsBound(mod: VuexTsModule<any, any, any, any, any>) {
+export function moduleIsBound(mod: VuexTsModule<any, any, any, any, any, any>) {
   return vuexTsStoreCache.has(mod.id);
 }
 
 /** Get the Vuex store instance assciated with the given VuexTs module's ID. */
-export function getStore(mod: VuexTsModule<any, any, any, any, any>): Store<any> {
+export function getStore(mod: VuexTsModule<any, any, any, any, any, any>): Store<any> {
   return vuexTsStoreCache.get(mod.id) as Store<any>;
 }
 
@@ -56,7 +58,7 @@ export function getStore(mod: VuexTsModule<any, any, any, any, any>): Store<any>
  *   plugins: [registerVuexTsModules(...vuexTsModules)],
  * });
  */
-export function registerVuexTsModules<RootState>(...vuexTsModules: VuexTsModule<any, RootState, any, any, any>[]) {
+export function registerVuexTsModules<RootState>(...vuexTsModules: VuexTsModule<any, RootState, any, any, any, any>[]) {
   return (store: Store<RootState>) => {
     vuexTsModules.forEach(mod => mod.register(store));
   };

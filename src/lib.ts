@@ -23,10 +23,8 @@ export function bindModuleToStore<RootState>(
   if (!vuexTsNamespaceCache.has(mod[id])) vuexTsNamespaceCache.set(mod[id], [...parentModuleNames, mod.name]);
   store.registerModule(vuexTsNamespaceCache.get(mod[id])!, mod[vuexModule]);
   vuexTsStoreCache.set(mod[id], store);
-  if (mod[staticChildren]) {
-    for (const m of Object.values(mod[staticChildren]!)) {
-      bindModuleToStore(m, store, [...vuexTsNamespaceCache.get(mod[id])!]);
-    }
+  for (const m of Object.values(mod[staticChildren])) {
+    bindModuleToStore(m, store, [...vuexTsNamespaceCache.get(mod[id])!]);
   }
 }
 
@@ -35,9 +33,7 @@ export function unbindModuleFromStore(mod: VuexTsModule<any, any, any, any, any,
   getStore(mod).unregisterModule(vuexTsNamespaceCache.get(mod[id])!);
   vuexTsStoreCache.delete(mod[id]);
   vuexTsNamespaceCache.delete(mod[id]);
-  if (mod[staticChildren]) {
-    for (const m of Object.values(mod[staticChildren]!)) unbindModuleFromStore(m);
-  }
+  for (const m of Object.values(mod[staticChildren])) unbindModuleFromStore(m);
 }
 
 /** Check if a module is already bound to a store. */

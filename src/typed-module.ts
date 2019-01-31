@@ -198,7 +198,7 @@ export abstract class ModuleChildren {
     const result: StaticChildren = {};
 
     for (const name of moduleNames) {
-      result[name] = this[name];
+      result[name] = this[name].clone(name);
     }
 
     return result;
@@ -219,7 +219,7 @@ export class VuexTsModule<
   readonly [staticGetters]: StaticGetters;
   readonly [staticMutations]: StaticMutations;
   readonly [staticActions]: StaticActions;
-  readonly [staticChildren]: StaticChildren | undefined;
+  readonly [staticChildren]: StaticChildren;
   readonly [initialState]: ModuleState | undefined;
 
   /**
@@ -351,6 +351,8 @@ export class VuexTsModule<
       this[staticChildren] = children;
       return Object.assign(this, children);
     }
+
+    this[staticChildren] = {};
   }
 
   // --- Vuex-related props/methods ----------------------------------------- //

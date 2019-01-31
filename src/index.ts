@@ -1,4 +1,12 @@
 export { registerVuexTsModules } from './lib';
-export { VuexTsModule, ModuleGetters, ModuleMutations, ModuleActions, createVuexTsModule } from './typed-module';
+export {
+  VuexTsModule,
+  VuexTsModuleBuilder,
+  ModuleGetters,
+  ModuleMutations,
+  ModuleActions,
+  ModuleChildren,
+  vuexTsBuilder,
+} from './typed-module';
 export { state, context, rootState } from './symbols';
 export * from './types';

@@ -1,7 +1,7 @@
 {
   "name": "vuex-ts",
-  "version": "2.0.7",
-  "description": "Strongly-typed Vuex store modules with an intuitive, incrementally-adoptable pattern.",
+  "version": "3.0.0",
+  "description": "Strongly-typed Vuex modules built for high-complexity stores and high-scalability needs.",
   "author": "Ian K Smith <smithki707@gmail.com>",
   "license": "MIT",
   "repository": {

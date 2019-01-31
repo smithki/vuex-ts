@@ -1,6 +1,5 @@
 import { ActionContext } from 'vuex';
-import { context, rootState, state } from './symbols';
-import { ModuleActions, ModuleGetters, ModuleMutations } from './typed-module';
+import { ModuleActions, ModuleChildren, ModuleMutations, VuexTsModule } from './typed-module';
 
 // --- Helpers -------------------------------------------------------------- //
 
@@ -33,3 +32,8 @@ export type DispatchFunc<T extends ModuleActions<any, any>> = (
   actionName: Exclude<KnownKeys<T>, symbol>,
   ...payload: ArgumentTypes<T[typeof actionName]>
 ) => ReturnType<T[typeof actionName]>;
+
+// --- Nested modules ------------------------------------------------------- //
+
+export type StaticChildren = { [key: string]: VuexTsModule<any, any, any, any, any, any> };
+export type ChildState<T extends ModuleChildren> = { [P in keyof T]: T[P]['state'] };

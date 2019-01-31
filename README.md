@@ -3,7 +3,7 @@
 [![code style: airbnb](https://img.shields.io/badge/code%20style-airbnb-blue.svg?style=flat)](https://github.com/airbnb/javascript)
 [![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat)](https://github.com/prettier/prettier)
 
-> Strongly-typed Vuex store modules with an intuitive, incrementally-adoptable pattern.
+> Strongly-typed Vuex modules built for high-complexity stores and high-scalability needs.
 
 ## 🔗 Installation
 
@@ -23,38 +23,38 @@ npm install vuex-ts
 
 ### Creating a basic module
 
-VuexTs has a simple API consisting of two functions: `createVuexTsModule` and `registerVuexTsModules`. The rest is a prescribed pattern to ensure strong-typing, enforced by abstract TypeScript classes and supported by Symbol-based access to contextual `state`, `rootState`, and other features of Vuex from within your getter, mutation, and action handlers. If you're familiar with Redux, some of this pattern may also be familiar.
+VuexTs has a simple API consisting of two functions: `vuexTsBuilder` and `registerVuexTsModules`. The rest is a just a pattern to ensure strong-typing, enforced by abstract TypeScript classes and supported by Symbol-based access to contextual `state`, `rootState`, and other features of Vuex from within your getter, mutation, and action handlers. If you're familiar with Redux, some of this pattern may already be familiar.
 
 Let's start with a basic example:
 
 ```ts
-import { createVuexTsModule } from 'vuex-ts';
+import { vuexTsBuilder } from 'vuex-ts';
 import { MyModuleState } from './myModule.model'; // MyModuleState is an interface describing the shape of this Vuex module.
 import { RootState } from '../path/to/root-model'; // RootState is an interface describing the shape of your Vuex store.
 import { MyModuleGetters } from './myModule.getters'; // MyModuleGetters is a class describing the getter handlers of this Vuex module.
 import { MyModuleMutations } from './myModule.mutations'; // MyModuleMutations is a class describing the mutation handlers of this Vuex module.
 import { MyModuleActions } from './myModule.actions'; // MyModuleActions is a class describing the action handlers of this Vuex module.
+import { MyModuleChildren } from './myModule.children'; // MyModuleChildren is a class describing the nested modules of this Vuex module.
 
 const initialMyModuleState: MyModuleState = {
   greeting: 'hello',
 };
 
-export const myModule = createVuexTsModule<
+export const myModule = VuexTsBuilder<
   MyModuleState,
   RootState,
-  MyModuleGetters,
-  MyModuleMutations,
-  MyModuleActions
 >({
   name: 'myModule', // Required.
   state: initialMyModuleState,
+}).inject({
   getters: MyModuleGetters,
   mutations: MyModuleMutations,
   actions: MyModuleActions,
+  modules: MyModuleChildren,
 });
 ```
 
-Now to use this module in our store, we must register it:
+Before we can use this module we must register it to our Vuex store:
 
 ```ts
 import Vue from 'vue';
@@ -94,7 +94,7 @@ export class MyModuleGetters extends ModuleGetters<MyModuleState, RootState> {
 }
 ```
 
-And for `mutations`:
+And our `mutations`:
 
 ```ts
 import { ModuleMutations, state } from 'vuex-ts';
@@ -110,7 +110,7 @@ export class MyModuleMutations extends ModuleMutations<MyModuleState> {
 }
 ```
 
-And for `actions`:
+And our `actions`:
 
 ```ts
 import { ModuleActions, state } from 'vuex-ts';
@@ -129,6 +129,25 @@ export class MyModuleActions extends ModuleActions<MyModuleState, RootState> {
     this[state].greeting = json.data; // Use your imagination!
   }
 }
+```
+
+And finally, of course, we can define some nested modules:
+
+```ts
+import { ModuleChildren } from 'vuex-ts';
+import { someNestedModule } from '../path/to/someNestedModule';
+
+export class MyModuleChildren extends ModuleChildren {
+  someNestedModule = someNestedModule; // Must be an instance of VuexTsModule
+}
+```
+
+Nested modules are accessible from the top-level of their parent, like this:
+
+```ts
+// It's just another instance of VuexTsModule,
+// so you have access to `commit`, `dispatch`, etc.
+myModule.someNestedModule
 ```
 
 That's all there is to it! You can choose to separate actions/mutations/getters across files or consolidate, but as your app scales managing these concerns separately is highly recommended!

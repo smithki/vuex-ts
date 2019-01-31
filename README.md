@@ -146,14 +146,15 @@ import { ModuleChildren } from 'vuex-ts';
 import { someNestedModule } from '../path/to/someNestedModule';
 
 export class MyModuleChildren extends ModuleChildren {
-  someNestedModule = someNestedModule; // Must be an instance of VuexTsModule
+  // Must be a function or method that returns an instance of CompositeVuexTsModule
+  someNestedModule = () => someNestedModule;
 }
 ```
 
 Nested modules are accessible from the top-level of their parent, like this:
 
 ```ts
-// It's just another instance of VuexTsModule,
+// It's just another instance of CompositeVuexTsModule,
 // so you have access to `store`, `commit`, `dispatch`, etc.
 myModule.someNestedModule
 

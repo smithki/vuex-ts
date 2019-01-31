@@ -54,7 +54,7 @@ export const myModule = VuexTsBuilder<
 });
 ```
 
-Now to use this module in our store, we must register it:
+Before we can use this module we must register it to our Vuex store:
 
 ```ts
 import Vue from 'vue';
@@ -94,7 +94,7 @@ export class MyModuleGetters extends ModuleGetters<MyModuleState, RootState> {
 }
 ```
 
-And for `mutations`:
+And our `mutations`:
 
 ```ts
 import { ModuleMutations, state } from 'vuex-ts';
@@ -110,7 +110,7 @@ export class MyModuleGetters extends ModuleMutations<MyModuleState> {
 }
 ```
 
-And for `actions`:
+And our `actions`:
 
 ```ts
 import { ModuleActions, state } from 'vuex-ts';
@@ -131,7 +131,7 @@ export class MyModuleGetters extends ModuleActions<MyModuleState, RootState> {
 }
 ```
 
-Finally, of course, we can define some nested modules:
+And finally, of course, we can define some nested modules:
 
 ```ts
 import { ModuleChildren } from 'vuex-ts';

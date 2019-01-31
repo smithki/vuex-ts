@@ -69,6 +69,11 @@ export const store = new Vuex.Store({
     registerVuexTsModules(myModule);
   ]
 });
+
+// Alternatively, you can instantiate a Vuex store directly from the module:
+export const store = myModule.toStore({
+  plugins: [/* The same store options are available to you here... */]
+})
 ```
 
 Now let's write our `getters`:

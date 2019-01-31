@@ -148,6 +148,10 @@ Nested modules are accessible from the top-level of their parent, like this:
 // It's just another instance of VuexTsModule,
 // so you have access to `commit`, `dispatch`, etc.
 myModule.someNestedModule
+
+// You can also access nested state objects just as you would expect,
+// with its type signature properly inferred!
+myModule.state.someNestedModule
 ```
 
 That's all there is to it! You can choose to separate actions/mutations/getters across files or consolidate, but as your app scales managing these concerns separately is highly recommended!

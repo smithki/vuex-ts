@@ -1,4 +1,4 @@
-import { ActionContext, Module, Store, StoreOptions } from 'vuex';
+import { ActionContext, Module, Store } from 'vuex';
 import {
   bindModuleToStore,
   getStore,
@@ -516,7 +516,7 @@ export class VuexTsModule<
    * Create a Vuex store instance from this VuexTsModule. Nested modules are
    * automatically registered using this method.
    *
-   * @param options - Same options you would provide to `new Vuex.Store({ ...
+   * @param options - Options you would provide to `new Vuex.Store({ ...
    * })`.
    */
   toStore(options: BareStoreOptions<RootState> = {}): Store<RootState & ChildState<Modules>> {

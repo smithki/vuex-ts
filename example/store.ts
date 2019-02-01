@@ -1,6 +1,6 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
-import { registerVuexTsModules } from '../src';
+import { registerVuexTsModules, StateInterfaceFromModule } from '../src';
 import { DoggoBreed, doggoState } from './doggos';
 import { KittenBreed, kittenState } from './kittens';
 
@@ -9,6 +9,8 @@ Vue.use(Vuex);
 export const store = kittenState.toStore({
   plugins: [registerVuexTsModules(doggoState)],
 });
+
+export interface RootState extends StateInterfaceFromModule<typeof kittenState> {}
 
 kittenState.doggoNested.commit.addDoggo({ name: 'Rover', breed: DoggoBreed.Golden, age: 10 });
 doggoState.commit.addDoggo({ name: 'Dude', breed: DoggoBreed.Golden, age: 9 });

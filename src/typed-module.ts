@@ -28,7 +28,6 @@ import {
   CompositeVuexTsModule,
   ConstructorOf,
   DispatchFunc,
-  KnownKeys,
   MappedKnownKeys,
   MappedModuleChildren,
   StaticActions,
@@ -39,7 +38,7 @@ import {
 
 // --- Getters -------------------------------------------------------------- //
 
-export abstract class ModuleGetters<ModuleState, RootState> {
+export abstract class ModuleGetters<ModuleState, RootState = any> {
   constructor(parentModule: VuexTsModule<ModuleState, RootState, any, any, any, any>) {
     return new Proxy(this, {
       get: (target, prop, receiver) => {
@@ -148,7 +147,7 @@ export abstract class ModuleMutations<ModuleState> {
 
 // --- Actions -------------------------------------------------------------- //
 
-export abstract class ModuleActions<ModuleState, RootState> {
+export abstract class ModuleActions<ModuleState, RootState = any> {
   constructor(parentModule: VuexTsModule<ModuleState, RootState, any, any, any, any>) {
     return new Proxy(this, {
       get: (target, prop, receiver) => {

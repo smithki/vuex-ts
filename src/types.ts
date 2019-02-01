@@ -14,6 +14,20 @@ export type MappedKnownKeys<T> = Pick<T, Exclude<KnownKeys<T>, symbol>>;
 export type ReturnTypeOrPlainProperty<T> = T extends (...args: any[]) => any ? ReturnType<T> : T;
 export interface BareStoreOptions<RootState> extends Pick<StoreOptions<RootState>, 'plugins' | 'strict'> {}
 
+/**
+ * Extend from this interface to extract the state type signature from a CompositeVuexTsModule.
+ */
+export type StateInterfaceFromModule<
+  T extends CompositeVuexTsModule<any, any, any, any, any, any>
+> = T extends CompositeVuexTsModule<any, any, any, any, any, any>
+  ? {
+      [P in Exclude<
+        KnownKeys<T['state']>,
+        Exclude<KnownKeys<VuexTsModule<any, any, any, any, any, any>>, symbol>
+      >]: Exclude<T['state'], Exclude<KnownKeys<VuexTsModule<any, any, any, any, any, any>>, symbol>>[P]
+    }
+  : never;
+
 // --- Getters -------------------------------------------------------------- //
 
 export type StaticGetters = { [key: string]: (vuexState: any, vuexRootState: any) => any };

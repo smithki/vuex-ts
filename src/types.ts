@@ -1,7 +1,7 @@
-import { ActionContext, Module } from 'vuex';
+import { ActionContext, Module, StoreOptions } from 'vuex';
 import { ModuleActions, ModuleChildren, ModuleGetters, ModuleMutations, VuexTsModule } from './typed-module';
 
-// --- Helpers -------------------------------------------------------------- //
+// --- Helpers and misc ----------------------------------------------------- //
 
 export type ArgumentTypes<F extends (...args: any[]) => any> = F extends (...args: infer A) => any ? A : never;
 export type ConstructorOf<C> = { new (...args: any[]): C };
@@ -12,6 +12,7 @@ export type KnownKeys<T> = { [K in keyof T]: string extends K ? never : number e
   : never;
 export type MappedKnownKeys<T> = Pick<T, Exclude<KnownKeys<T>, symbol>>;
 export type ReturnTypeOrPlainProperty<T> = T extends (...args: any[]) => any ? ReturnType<T> : T;
+export interface BareStoreOptions<RootState> extends Pick<StoreOptions<RootState>, 'plugins' | 'strict'> {}
 
 // --- Getters -------------------------------------------------------------- //
 
@@ -37,7 +38,11 @@ export type DispatchFunc<T extends ModuleActions<any, any>> = (
 
 export type StaticChildren = { [key: string]: Module<any, any> };
 export type ChildState<T extends ModuleChildren> = { [P in keyof T]: ReturnType<T[P]>['state'] };
-export type MappedModuleChildren<T extends ModuleChildren> = { [P in keyof T]: ReturnType<T[P]> };
+export type MappedModuleChildren<T extends ModuleChildren> = {
+  [P in Exclude<KnownKeys<T>, Exclude<KnownKeys<VuexTsModule<any, any, any, any, any, any>>, symbol>>]: ReturnType<
+    Pick<T, Exclude<KnownKeys<T>, Exclude<KnownKeys<VuexTsModule<any, any, any, any, any, any>>, symbol>>>[P]
+  >
+};
 export type CompositeVuexTsModule<
   ModuleState,
   RootState,

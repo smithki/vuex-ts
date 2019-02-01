@@ -12,6 +12,7 @@ import {
   context,
   id,
   initialState,
+  isRoot,
   rootState,
   state,
   staticActions,
@@ -21,6 +22,7 @@ import {
   vuexModule,
 } from './symbols';
 import {
+  BareStoreOptions,
   ChildState,
   CommitFunc,
   CompositeVuexTsModule,
@@ -50,6 +52,7 @@ export abstract class ModuleGetters<ModuleState, RootState> {
             );
           }
 
+          if (parentModule[isRoot]) return getStore(parentModule).getters[prop];
           return getStore(parentModule).getters[`${parentModule.namespaceKey}/${prop}`];
         }
 
@@ -105,7 +108,8 @@ export abstract class ModuleMutations<ModuleState> {
           }
 
           return (payload: any) => {
-            getStore(parentModule).commit(`${parentModule.namespaceKey}/${prop}`, payload, { root: true }) as any;
+            if (parentModule[isRoot]) getStore(parentModule).commit(prop as string, payload, { root: true }) as any;
+            else getStore(parentModule).commit(`${parentModule.namespaceKey}/${prop}`, payload, { root: true }) as any;
           };
         }
 
@@ -158,6 +162,12 @@ export abstract class ModuleActions<ModuleState, RootState> {
           }
 
           return (payload: any) => {
+            if (parentModule[isRoot]) {
+              return getStore(parentModule).dispatch(prop as any, payload, {
+                root: true,
+              }) as any;
+            }
+
             return getStore(parentModule).dispatch(`${parentModule.namespaceKey}/${prop}`, payload, {
               root: true,
             }) as any;
@@ -219,6 +229,18 @@ export abstract class ModuleChildren {
   }
 
   [key: string]: () => CompositeVuexTsModule<any, any, any, any, any, any>;
+
+  // Disallow reserved keys
+  name: never;
+  getters: never;
+  commit: never;
+  dispatch: never;
+  clone: never;
+  state: never;
+  namespaceKey: never;
+  register: never;
+  unregister: never;
+  toStore: never;
 }
 
 // --- Module --------------------------------------------------------------- //
@@ -238,6 +260,7 @@ export class VuexTsModule<
   readonly [staticChildren]: StaticChildren;
   readonly [children]: MappedModuleChildren<Modules>;
   readonly [initialState]: ModuleState;
+  private [isRoot]: boolean;
 
   /**
    * This module's name.
@@ -303,6 +326,7 @@ export class VuexTsModule<
     this.name = moduleName;
     this[id] = Symbol(this.name);
     this[initialState] = typeof moduleState === 'function' ? (moduleState as any)() : moduleState;
+    this[isRoot] = false;
 
     // --- Build `clone(...)` method --- //
 
@@ -370,7 +394,7 @@ export class VuexTsModule<
       const sc = modInst[staticChildren];
       this[staticChildren] = sc;
       this[children] = modInst as any;
-      return Object.assign(this, modInst as MappedModuleChildren<Modules>);
+      return Object.assign(this, (modInst as any) as MappedModuleChildren<Modules>);
     }
 
     this[staticChildren] = this[children] = {} as any;
@@ -387,6 +411,8 @@ export class VuexTsModule<
    */
   get state(): ModuleState & ChildState<Modules> {
     if (moduleIsBound(this)) {
+      if (this[isRoot]) return getStore(this).state;
+
       const modulePath = this.namespaceKey.split('/');
       let stateObj = getStore(this).state;
 
@@ -415,6 +441,7 @@ export class VuexTsModule<
    */
   get namespaceKey() {
     if (moduleIsBound(this)) {
+      if (this[isRoot]) return '';
       return qualifyNamespace(this);
     }
 
@@ -434,8 +461,8 @@ export class VuexTsModule<
    */
   get [vuexModule](): Module<ModuleState, RootState> {
     return {
-      namespaced: true,
-      state: () => this[initialState],
+      namespaced: !this[isRoot],
+      state: this[isRoot] ? this[initialState] : () => this[initialState],
       getters: this[staticGetters],
       mutations: this[staticMutations],
       actions: this[staticActions],
@@ -467,7 +494,7 @@ export class VuexTsModule<
             this.namespaceKey
           }' is registered to another Vuex store. VuexTs modules can only be registered to one Vuex store at a time. You can unregister this module by calling '${
             this.name
-          }.unregister()' or create a new module instance with 'createVuexTsModule(...)'.`,
+          }.unregister()' or create a new module instance with '${this.name}.clone()'.`,
         );
       }
 
@@ -493,11 +520,17 @@ export class VuexTsModule<
    * @param options - Same options you would provide to `new Vuex.Store({ ...
    * })`.
    */
-  toStore(options: StoreOptions<RootState> = {}): Store<RootState & ChildState<Modules>> {
+  toStore(options: BareStoreOptions<RootState> = {}): Store<RootState & ChildState<Modules>> {
+    this[isRoot] = true;
     const registration = [registerVuexTsModules(this)];
+
+    // Apply plugins
     if (options.plugins && Array.isArray(options.plugins)) options.plugins.unshift(...registration);
     else options.plugins = registration;
-    return new Store(options) as any;
+
+    const rootModule = { ...this[vuexModule], ...options };
+
+    return new Store(rootModule as any) as any;
   }
 }
 

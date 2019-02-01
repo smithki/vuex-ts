@@ -73,9 +73,10 @@ export const store = new Vuex.Store({
   ]
 });
 
-// Alternatively, you can instantiate a Vuex store directly from the module:
+// Alternatively, you can instantiate a Vuex store directly from the module.
+// Doing it this way makes `myModule` into the root module of the store.
 export const store = myModule.toStore({
-  // The same store options are available to you here...
+  // You can add plugins or set "strict" mode here.
 });
 ```
 

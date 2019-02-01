@@ -1,5 +1,5 @@
 import { Store } from 'vuex';
-import { children, id, vuexModule } from './symbols';
+import { children, id, isRoot, vuexModule } from './symbols';
 import { VuexTsModule } from './typed-module';
 import { CompositeVuexTsModule } from './types';
 
@@ -20,12 +20,21 @@ export function bindModuleToStore(
   mod: VuexTsModule<any, any, any, any, any, any>,
   store: Store<any>,
   parentModuleNames: string[] = [],
+  skipStoreRegistration: boolean = false,
 ) {
-  if (!vuexTsNamespaceCache.has(mod[id])) vuexTsNamespaceCache.set(mod[id], [...parentModuleNames, mod.name]);
-  if (!parentModuleNames.length) store.registerModule(vuexTsNamespaceCache.get(mod[id])!, mod[vuexModule]);
+  if (!vuexTsNamespaceCache.has(mod[id])) {
+    if (mod[isRoot]) vuexTsNamespaceCache.set(mod[id], []);
+    else vuexTsNamespaceCache.set(mod[id], [...parentModuleNames, mod.name]);
+  }
+
+  if (!parentModuleNames.length && !mod[isRoot] && !skipStoreRegistration) {
+    store.registerModule(vuexTsNamespaceCache.get(mod[id])!, mod[vuexModule]);
+  }
+
   vuexTsStoreCache.set(mod[id], store);
+
   for (const m of Object.values(mod[children])) {
-    bindModuleToStore(m, store, [...vuexTsNamespaceCache.get(mod[id])!]);
+    bindModuleToStore(m as any, store, [...vuexTsNamespaceCache.get(mod[id])!], true);
   }
 }
 
@@ -34,7 +43,7 @@ export function unbindModuleFromStore(mod: VuexTsModule<any, any, any, any, any,
   getStore(mod).unregisterModule(vuexTsNamespaceCache.get(mod[id])!);
   vuexTsStoreCache.delete(mod[id]);
   vuexTsNamespaceCache.delete(mod[id]);
-  for (const m of Object.values(mod[children])) unbindModuleFromStore(m);
+  for (const m of Object.values(mod[children])) unbindModuleFromStore(m as any);
 }
 
 /** Check if a module is already bound to a store. */

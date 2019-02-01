@@ -14,3 +14,4 @@ export const children = Symbol('VuexTs dynamic nested modules');
 export const initialState = Symbol('VuexTs initial state');
 export const vuexModule = Symbol('VuexTs raw Vuex module');
 export const id = Symbol('VuexTs module ID');
+export const isRoot = Symbol('VuexTS root module flag');

@@ -6,17 +6,15 @@ import { KittenBreed, kittenState } from './kittens';
 
 Vue.use(Vuex);
 
-export const store = kittenState.toStore({
-  plugins: [registerVuexTsModules(doggoState)],
+export const store = new Vuex.Store({
+  plugins: [registerVuexTsModules(doggoState, kittenState)],
 });
 
 export interface RootState extends StateInterfaceFromModule<typeof kittenState> {
-  doggoState: typeof doggoState;
+  doggoState: StateInterfaceFromModule<typeof doggoState>;
 }
 
 kittenState.doggoNested.commit.addDoggo({ name: 'Rover', breed: DoggoBreed.Golden, age: 10 });
 doggoState.commit.addDoggo({ name: 'Dude', breed: DoggoBreed.Golden, age: 9 });
 doggoState.commit.addDoggo({ name: 'Aristotle', breed: DoggoBreed.Basset, age: 14 });
 kittenState.commit.addKitten({ name: 'Shadow', breed: KittenBreed.Dsh, age: 8 });
-
-console.log(doggoState.getters.oldestDoggo);

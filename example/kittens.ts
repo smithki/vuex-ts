@@ -1,4 +1,4 @@
-import { ModuleChildren, ModuleGetters, ModuleMutations, state, vuexTsBuilder, VuexTsModule } from '../src';
+import { ModuleChildren, ModuleGetters, ModuleMutations, state, vuexTsBuilder } from '../src';
 import { doggoState } from './doggos';
 import { RootState } from './store';
 

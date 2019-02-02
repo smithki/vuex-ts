@@ -1,6 +1,6 @@
 import { ModuleChildren, ModuleGetters, ModuleMutations, state, vuexTsBuilder } from '../src';
 import { doggoState } from './doggos';
-import { RootState } from './store';
+import { RootState } from './root-state';
 
 export enum KittenBreed {
   Dsh = 'DOMESTIC_SHORT_HAIR',
@@ -20,7 +20,7 @@ export interface KittenState {
 
 // --- Getters --- //
 
-class KittenGetters extends ModuleGetters<KittenState, RootState> {
+export class KittenGetters extends ModuleGetters<KittenState, RootState> {
   get oldestKitten() {
     return this[state].kittens.reduce((a, b) => (a.age > b.age ? a : b));
   }
@@ -32,7 +32,7 @@ class KittenGetters extends ModuleGetters<KittenState, RootState> {
 
 // --- Mutations --- //
 
-class KittenMutations extends ModuleMutations<KittenState> {
+export class KittenMutations extends ModuleMutations<KittenState> {
   addKitten(payload: Kitten) {
     this[state].kittens.push(payload);
   }
@@ -40,7 +40,7 @@ class KittenMutations extends ModuleMutations<KittenState> {
 
 // --- Nested modules --- //
 
-class KittenChildren extends ModuleChildren {
+export class KittenChildren extends ModuleChildren {
   doggoNested = () => doggoState;
 }
 

@@ -1,6 +1,6 @@
 {
   "name": "vuex-ts",
-  "version": "4.2.1",
+  "version": "4.2.2",
   "description": "Strongly-typed Vuex modules built for high-complexity stores and high-scalability needs.",
   "author": "Ian K Smith <smithki707@gmail.com>",
   "license": "MIT",

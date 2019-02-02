@@ -59,11 +59,12 @@ export function moduleIsBound(mod: VuexTsModule<any, any, any, any, any, any>) {
   return vuexTsStoreRelationships.has(mod[id]);
 }
 
-/** Get the Vuex store instance assciated with the given VuexTs module's ID. */
+/** Get the Vuex store instance assciated with the given module. */
 export function getStore(mod: VuexTsModule<any, any, any, any, any, any>): Store<any> {
   return vuexTsStoreRelationships.get(mod[id]) as Store<any>;
 }
 
+/** Get the module associated with the given ID. */
 export function getModule(id: symbol): VuexTsModule<any, any, any, any, any, any> | undefined {
   return vuexTsModuleIdRelationships.has(id) ? vuexTsModuleIdRelationships.get(id) : undefined;
 }

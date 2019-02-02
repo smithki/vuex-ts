@@ -69,7 +69,7 @@ export abstract class ModuleGetters<ModuleState, RootState = any> {
       const unwrappedProxy = Object.create(proto);
       const isComputedGetter = Boolean(Object.getOwnPropertyDescriptor(proto, name)!.get);
 
-      result[name] = (vuexState, vuexRootState) => {
+      result[name] = (vuexState, vuexGetters, vuexRootState) => {
         const getContext = new Proxy(unwrappedProxy, {
           get: (target, prop, receiver) => {
             if (prop === state) return vuexState;
@@ -119,7 +119,7 @@ export abstract class ModuleMutations<ModuleState> {
 
   get [staticMutations]() {
     const methodNames = Object.getOwnPropertyNames(Object.getPrototypeOf(this)).filter(name => name !== 'constructor');
-    const result: StaticGetters = {};
+    const result: StaticMutations = {};
 
     for (const name of methodNames) {
       const proto = Object.getPrototypeOf(this);
@@ -180,7 +180,7 @@ export abstract class ModuleActions<ModuleState, RootState = any> {
 
   get [staticActions]() {
     const methodNames = Object.getOwnPropertyNames(Object.getPrototypeOf(this)).filter(name => name !== 'constructor');
-    const result: StaticGetters = {};
+    const result: StaticActions = {};
 
     for (const name of methodNames) {
       const proto = Object.getPrototypeOf(this);

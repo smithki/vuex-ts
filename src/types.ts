@@ -30,7 +30,7 @@ export type StateInterfaceFromModule<
 
 // --- Getters -------------------------------------------------------------- //
 
-export type StaticGetters = { [key: string]: (vuexState: any, vuexRootState: any) => any };
+export type StaticGetters = { [key: string]: (vuexState: any, vuexGetters: any, vuexRootState: any) => any };
 
 // --- Mutations ------------------------------------------------------------ //
 

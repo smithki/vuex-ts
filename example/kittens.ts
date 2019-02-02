@@ -24,6 +24,10 @@ class KittenGetters extends ModuleGetters<KittenState, RootState> {
   get oldestKitten() {
     return this[state].kittens.reduce((a, b) => (a.age > b.age ? a : b));
   }
+
+  get youngestKitten() {
+    return this[state].kittens.reduce((a, b) => (a.age < b.age ? a : b));
+  }
 }
 
 // --- Mutations --- //

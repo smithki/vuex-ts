@@ -1,4 +1,4 @@
-import { ModuleGetters, ModuleMutations, state, vuexTsBuilder } from '../src';
+import { ModuleGetters, ModuleMutations, rootState, state, vuexTsBuilder } from '../src';
 import { RootState } from './store';
 
 export enum DoggoBreed {
@@ -21,6 +21,10 @@ export interface DoggoState {
 class DoggoGetters extends ModuleGetters<DoggoState, RootState> {
   get oldestDoggo() {
     return this[state].doggos.reduce((a, b) => (a.age > b.age ? a : b));
+  }
+
+  get youngestDoggo() {
+    return this[state].doggos.reduce((a, b) => (a.age < b.age ? a : b));
   }
 }
 

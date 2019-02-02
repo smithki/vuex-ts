@@ -1,4 +1,4 @@
-import { ModuleGetters, ModuleMutations, rootState, state, vuexTsBuilder } from '../src';
+import { ModuleGetters, ModuleMutations, state, vuexTsBuilder } from '../src';
 import { RootState } from './store';
 
 export enum DoggoBreed {

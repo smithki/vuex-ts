@@ -14,4 +14,6 @@ export const children = Symbol('children');
 export const initialState = Symbol('initialState');
 export const vuexModule = Symbol('vuexModule');
 export const id = Symbol('id');
+export const parentId = Symbol('parentId');
 export const isRoot = Symbol('isRoot');
+export const isNested = Symbol('isNested');

@@ -51,12 +51,18 @@ export type DispatchFunc<T extends ModuleActions<any, any>> = (
 // --- Nested modules ------------------------------------------------------- //
 
 export type StaticChildren = { [key: string]: Module<any, any> };
-export type ChildState<T extends ModuleChildren> = { [P in keyof T]: ReturnType<T[P]>['state'] };
+
+export type ChildState<T extends ModuleChildren> = {
+  [P in Exclude<KnownKeys<T>, KnownKeys<VuexTsModule<any, any, any, any, any, any>>>]: ReturnType<T[P]>['state']
+};
+
 export type MappedModuleChildren<T extends ModuleChildren> = {
-  [P in Exclude<KnownKeys<T>, Exclude<KnownKeys<VuexTsModule<any, any, any, any, any, any>>, symbol>>]: ReturnType<
-    Pick<T, Exclude<KnownKeys<T>, Exclude<KnownKeys<VuexTsModule<any, any, any, any, any, any>>, symbol>>>[P]
+  [P in Exclude<KnownKeys<T>, KnownKeys<VuexTsModule<any, any, any, any, any, any>>>]: Pick<
+    ReturnType<T[P]>,
+    Exclude<KnownKeys<VuexTsModule<any, any, any, any, any, any>>, 'unregister' | 'register' | 'toStore'>
   >
 };
+
 export type CompositeVuexTsModule<
   ModuleState,
   RootState,

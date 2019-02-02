@@ -1,6 +1,18 @@
 import { ActionContext, Module, Store } from 'vuex';
 import {
+  InvalidStoreError,
+  ModuleBoundToDifferentStoreError,
+  ModuleBoundToSameStoreError,
+  ModuleNotBoundToStoreError,
+  NestedModuleUnregisterError,
+  NoActionsDefinedError,
+  NoMutationsDefinedError,
+  RootModuleUnregisterError,
+  UndefinedStoreError,
+} from './exceptions';
+import {
   bindModuleToStore,
+  getModule,
   getStore,
   moduleIsBound,
   qualifyNamespace,
@@ -12,7 +24,9 @@ import {
   context,
   id,
   initialState,
+  isNested,
   isRoot,
+  parentId,
   rootState,
   state,
   staticActions,
@@ -44,11 +58,7 @@ export abstract class ModuleGetters<ModuleState, RootState = any> {
       get: (target, prop, receiver) => {
         if (typeof prop !== 'symbol') {
           if (!moduleIsBound(parentModule)) {
-            throw new Error(
-              `You must register '${parentModule.name}' to a Vuex store before accessing getters. Call '${
-                parentModule.name
-              }.register(store)'`,
-            );
+            throw new ModuleNotBoundToStoreError(parentModule.name, 'getters');
           }
 
           if (parentModule[isRoot]) return getStore(parentModule).getters[prop];
@@ -99,11 +109,7 @@ export abstract class ModuleMutations<ModuleState> {
       get: (target, prop, receiver) => {
         if (typeof prop !== 'symbol') {
           if (!moduleIsBound(parentModule)) {
-            throw new Error(
-              `You must register '${parentModule.name}' to a Vuex store before committing mutations. Call '${
-                parentModule.name
-              }.register(store)'`,
-            );
+            throw new ModuleNotBoundToStoreError(parentModule.name, 'commit');
           }
 
           return (payload: any) => {
@@ -153,11 +159,7 @@ export abstract class ModuleActions<ModuleState, RootState = any> {
       get: (target, prop, receiver) => {
         if (typeof prop !== 'symbol') {
           if (!moduleIsBound(parentModule)) {
-            throw new Error(
-              `You must register '${parentModule.name}' to a Vuex store before dispatching actions. Call '${
-                parentModule.name
-              }.register(store)'`,
-            );
+            throw new ModuleNotBoundToStoreError(parentModule.name, 'dispatch');
           }
 
           return (payload: any) => {
@@ -259,7 +261,10 @@ export class VuexTsModule<
   readonly [staticChildren]: StaticChildren;
   readonly [children]: MappedModuleChildren<Modules>;
   readonly [initialState]: ModuleState;
-  private [isRoot]: boolean;
+
+  [isRoot]: boolean;
+  [isNested]: boolean;
+  [parentId]: symbol | undefined;
 
   /**
    * This module's name.
@@ -326,6 +331,8 @@ export class VuexTsModule<
     this[id] = Symbol(this.name);
     this[initialState] = typeof moduleState === 'function' ? (moduleState as any)() : moduleState;
     this[isRoot] = false;
+    this[isNested] = false;
+    this[parentId] = undefined;
 
     // --- Build `clone(...)` method --- //
 
@@ -365,6 +372,10 @@ export class VuexTsModule<
       }
 
       this.commit = Object.assign(commitFunc, mappedMutations);
+    } else {
+      (this.commit as any) = () => {
+        throw new NoMutationsDefinedError(this.name);
+      };
     }
 
     // --- Build strongly-typed actions --- //
@@ -384,6 +395,10 @@ export class VuexTsModule<
       }
 
       this.dispatch = Object.assign(dispatchFunc, mappedActions);
+    } else {
+      (this.dispatch as any) = () => {
+        throw new NoActionsDefinedError(this.name);
+      };
     }
 
     // --- Build nested modules --- //
@@ -423,11 +438,7 @@ export class VuexTsModule<
     }
 
     // Raise an error is this module is not bound to a store yet.
-    throw new Error(
-      `Module '${this.name}' is not registered to a Vuex store. Call '${
-        this.name
-      }.register(store)' before accessing state.`,
-    );
+    throw new ModuleNotBoundToStoreError(this.name, 'state');
   }
 
   // --- VuexTS-related utilities ------------------------------------------- //
@@ -444,11 +455,7 @@ export class VuexTsModule<
       return qualifyNamespace(this);
     }
 
-    throw new Error(
-      `Module '${this.name}' is not registered to a Vuex store. Call '${
-        this.name
-      }.register(store)' before accessing 'namespaceKey'.`,
-    );
+    throw new ModuleNotBoundToStoreError(this.name, 'namespaceKey');
   }
 
   /**
@@ -477,27 +484,18 @@ export class VuexTsModule<
    * @memberof VuexTsModule
    */
   register(store: Store<RootState>): void {
+    if (!store) throw new UndefinedStoreError(this.name);
+    if (!(store instanceof Store)) throw new InvalidStoreError(this.name);
+
     if (moduleIsBound(this)) {
       if (getStore(this) === store) {
         // If we are attempting to register to the same store, warn and skip the step.
-        console.warn(
-          `Module '${this.namespaceKey}' is already registered to the provided store. There is no need to call '${
-            this.name
-          }.register()' again.`,
-        );
+        throw new ModuleBoundToSameStoreError(this.name, this.namespaceKey);
       } else {
         // If we are attempting to register to another Vuex store, raise an
         // error and explain possible steps to resolve the issue.
-        throw new Error(
-          `Module '${
-            this.namespaceKey
-          }' is registered to another Vuex store. VuexTs modules can only be registered to one Vuex store at a time. You can unregister this module by calling '${
-            this.name
-          }.unregister()' or create a new module instance with '${this.name}.clone()'.`,
-        );
+        throw new ModuleBoundToDifferentStoreError(this.name, this.namespaceKey);
       }
-
-      return;
     }
 
     bindModuleToStore(this, store);
@@ -509,7 +507,16 @@ export class VuexTsModule<
    * @memberof VuexTsModule
    */
   unregister(): void {
-    if (moduleIsBound(this)) unbindModuleFromStore(this);
+    if (moduleIsBound(this)) {
+      if (this[isRoot]) throw new RootModuleUnregisterError(this.name);
+      if (this[isNested]) {
+        const parentModule = getModule(this[parentId]!);
+        throw new NestedModuleUnregisterError(this.name, parentModule!.name, parentModule![isRoot]);
+      }
+      unbindModuleFromStore(this);
+    }
+
+    throw new ModuleNotBoundToStoreError(this.name, 'unregister');
   }
 
   /**

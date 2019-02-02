@@ -15,15 +15,19 @@
   "typings": "dist/index.d.ts",
   "unpkg": "dist/index.umd.js",
   "scripts": {
-    "dev": "npm-run-all -s clean:dist compile_watch",
+    "dev": "npm-run-all -s clean:dist compile-watch",
     "build": "npm-run-all -s clean:dist compile",
     "compile": "microbundle build src/index.ts --external vuex --name VuexTs",
-    "compile_watch": "microbundle watch src/index.ts --external vuex --name VuexTs",
+    "compile-watch": "microbundle watch src/index.ts --external vuex --name VuexTs",
     "example": "parcel example/index.html --out-dir example-dist",
     "clean": "npm-run-all -s clean:*",
     "clean:dist": "rimraf dist && rimraf coverage",
     "clean:example-dist": "rimraf example-dist",
     "clean:cache": "rimraf .rts2_cache_* .cache",
+    "test-watch": "chokidar \"./test/**/*.spec.ts\" -c \"yarn test\" --initial \"yarn test\"",
+    "test": "npm-run-all -s test:*",
+    "test:compile": "tsc -p ./test",
+    "test:run": "alsatian ./test/dist/**/*.spec.js",
     "prepublishOnly": "npm run build"
   },
   "peerDependencies": {
@@ -31,6 +35,8 @@
   },
   "devDependencies": {
     "@ikscodes/tslint-config": "^5.3.1",
+    "alsatian": "^2.3.0",
+    "chokidar-cli": "^1.2.1",
     "microbundle": "^0.7.0",
     "npm-run-all": "^4.1.5",
     "parcel-bundler": "^1.11.0",

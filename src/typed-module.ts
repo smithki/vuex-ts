@@ -365,6 +365,10 @@ export class VuexTsModule<
       }
 
       this.commit = Object.assign(commitFunc, mappedMutations);
+    } else {
+      (this.commit as any) = () => {
+        throw new Error(`No mutations defined on module '${this.name}'.`);
+      };
     }
 
     // --- Build strongly-typed actions --- //
@@ -384,6 +388,10 @@ export class VuexTsModule<
       }
 
       this.dispatch = Object.assign(dispatchFunc, mappedActions);
+    } else {
+      (this.dispatch as any) = () => {
+        throw new Error(`No actions defined on module '${this.name}'.`);
+      };
     }
 
     // --- Build nested modules --- //

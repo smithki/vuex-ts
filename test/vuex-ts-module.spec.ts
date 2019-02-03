@@ -3,15 +3,17 @@ import { Expect, SetupFixture, Test, TestFixture } from 'alsatian';
 import Vue from 'vue';
 import Vuex, { Store } from 'vuex';
 
-import { registerVuexTsModules, vuexTsBuilder, VuexTsModule, VuexTsModuleBuilder } from '../src';
+import { CompositeVuexTsModule, registerVuexTsModules, vuexTsBuilder, VuexTsModule, VuexTsModuleBuilder } from '../src';
 import { id, staticMutations } from '../src/symbols';
 
 import { doggoState } from '../example/doggos';
 import { kittenState } from '../example/kittens';
+import { moduleIsBound } from '../src/lib';
 
 @TestFixture('VuexTsModule Tests')
 export class VuexTsModuleTestFixture {
   store: Store<any>;
+  dummyModule: CompositeVuexTsModule<any, any, any, any, any, any>;
 
   @SetupFixture
   setupFixture() {
@@ -53,5 +55,34 @@ export class VuexTsModuleTestFixture {
     clone.unregister();
   }
 
-  // @Test('')
+  @Test('Successfully register a module to the store')
+  public registerModuleTest() {
+    this.dummyModule = vuexTsBuilder({ name: 'helloWorld' }).inject();
+    this.dummyModule.register(this.store);
+
+    Expect(moduleIsBound(this.dummyModule as any)).toBeTruthy();
+  }
+
+  @Test('Prevent re-registering an already bound module')
+  public preventReregisterTest() {
+    try {
+      this.dummyModule.register(this.store);
+    } catch (err) {
+      Expect(err).toBeDefined();
+      return;
+    }
+
+    Expect(false).toBeTruthy();
+  }
+
+  @Test('Successfully unregister a module to the store')
+  public unregisterModuleTest() {
+    try {
+      this.dummyModule.unregister();
+    } catch (err) {
+      Expect(err).not.toBeDefined();
+    }
+
+    Expect(moduleIsBound(this.dummyModule as any)).not.toBeTruthy();
+  }
 }

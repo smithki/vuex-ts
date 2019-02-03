@@ -27,7 +27,7 @@
     "clean:cache": "rimraf .rts2_cache_* .cache",
     "test-watch": "npm-run-all -s test:compile -p test-watch:*",
     "test-watch:compile": "tsc -w -p ./test",
-    "test-watch:run": "chokidar \"./test/dist/**/*.spec.js\" -c \"yarn test:run\" --initial \"yarn test:run\"",
+    "test-watch:run": "chokidar \"./test/dist/**/*.spec.js\" -c \"npm run test:run\" --initial \"npm run test:run\"",
     "test": "npm-run-all -s test:*",
     "test:compile": "tsc -p ./test",
     "test:run": "alsatian ./test/dist/**/*.spec.js",

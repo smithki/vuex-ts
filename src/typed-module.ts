@@ -514,9 +514,9 @@ export class VuexTsModule<
         throw new NestedModuleUnregisterError(this.name, parentModule!.name, parentModule![isRoot]);
       }
       unbindModuleFromStore(this);
+    } else {
+      throw new ModuleNotBoundToStoreError(this.name, 'unregister');
     }
-
-    throw new ModuleNotBoundToStoreError(this.name, 'unregister');
   }
 
   /**

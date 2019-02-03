@@ -47,11 +47,12 @@ export function bindModuleToStore(
 }
 
 /** Unbind a VuexTs module from its currently bound Vuex store instance. */
-export function unbindModuleFromStore(mod: VuexTsModule<any, any, any, any, any, any>) {
-  getStore(mod).unregisterModule(vuexTsNamespaceRelationships.get(mod[id])!);
+export function unbindModuleFromStore(mod: VuexTsModule<any, any, any, any, any, any>, isModNested: boolean = false) {
+  if (!isModNested) getStore(mod).unregisterModule(vuexTsNamespaceRelationships.get(mod[id])!);
   vuexTsStoreRelationships.delete(mod[id]);
   vuexTsNamespaceRelationships.delete(mod[id]);
-  for (const m of Object.values(mod[children])) unbindModuleFromStore(m as any);
+  vuexTsModuleIdRelationships.delete(mod[id]);
+  for (const m of Object.values(mod[children])) unbindModuleFromStore(m as any, true);
 }
 
 /** Check if a module is already bound to a store. */

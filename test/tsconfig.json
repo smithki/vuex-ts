@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "lib": ["es2018", "dom"],
-    "module": "es2015",
+    "module": "commonjs",
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": false,
     "experimentalDecorators": true,
@@ -9,15 +9,12 @@
     "noImplicitReturns": true,
     "noImplicitThis": true,
     "strictNullChecks": true,
-    "target": "es5",
+    "esModuleInterop": true,
     "sourceMap": true,
-    "outDir": "./dist",
-    "declaration": true,
+    "target": "es5",
+    "outDir": "./dist"
   },
   "include": [
-    "src",
-  ],
-  "exclude": [
-    "node_modules"
-  ],
+    "**/*"
+  ]
 }

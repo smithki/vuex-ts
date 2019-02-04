@@ -20,5 +20,3 @@ kittenState.doggoNested.commit.addDoggo({ name: 'Rover', breed: DoggoBreed.Golde
 doggoState.commit.addDoggo({ name: 'Dude', breed: DoggoBreed.Golden, age: 9 });
 doggoState.commit.addDoggo({ name: 'Aristotle', breed: DoggoBreed.Basset, age: 14 });
 kittenState.commit.addKitten({ name: 'Shadow', breed: KittenBreed.Dsh, age: 8 });
-
-doggoState.unregister();

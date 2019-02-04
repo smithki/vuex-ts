@@ -4,7 +4,7 @@ import Vue from 'vue';
 import Vuex, { Store } from 'vuex';
 
 import { CompositeVuexTsModule, registerVuexTsModules, vuexTsBuilder, VuexTsModule, VuexTsModuleBuilder } from '../src';
-import { id, staticMutations } from '../src/symbols';
+import { id } from '../src/symbols';
 
 import { doggoState } from '../example/doggos';
 import { kittenState } from '../example/kittens';

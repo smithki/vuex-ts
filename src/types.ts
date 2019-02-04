@@ -1,5 +1,6 @@
 import { ActionContext, Module, StoreOptions } from 'vuex';
-import { ModuleActions, ModuleChildren, ModuleGetters, ModuleMutations, VuexTsModule } from './typed-module';
+import { ModuleActions, ModuleChildren, ModuleGetters, ModuleMutations } from './module-parts';
+import { VuexTsModule } from './typed-module';
 
 // --- Helpers and misc ----------------------------------------------------- //
 

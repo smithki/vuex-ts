@@ -6,7 +6,7 @@ import Vuex, { Store } from 'vuex';
 import { CompositeVuexTsModule, registerVuexTsModules, vuexTsBuilder, VuexTsModule, VuexTsModuleBuilder } from '../src';
 import { id } from '../src/symbols';
 
-import { doggoState } from '../example/doggos';
+import { Doggo, DoggoBreed, doggoState } from '../example/doggos';
 import { kittenState } from '../example/kittens';
 import { moduleIsBound } from '../src/lib';
 
@@ -75,7 +75,7 @@ export class VuexTsModuleTestFixture {
     Expect(false).toBeTruthy();
   }
 
-  @Test('Successfully unregister a module to the store')
+  @Test('Successfully unregister a module from the store')
   public unregisterModuleTest() {
     try {
       this.dummyModule.unregister();
@@ -84,5 +84,29 @@ export class VuexTsModuleTestFixture {
     }
 
     Expect(moduleIsBound(this.dummyModule as any)).not.toBeTruthy();
+  }
+
+  @Test('Successfully commit a mutation using the object interface')
+  public commitMutationObjectTest() {
+    const newState: Doggo = { name: 'Rover', breed: DoggoBreed.Basset, age: 15 };
+
+    doggoState.commit.addDoggo(newState);
+
+    Expect(doggoState.state.doggos[1]).toEqual(newState);
+  }
+
+  @Test('Successfully commit a mutation using the function interface')
+  public commitMutationFunctionTest() {
+    const newState: Doggo = { name: 'Fido', breed: DoggoBreed.Golden, age: 8 };
+
+    doggoState.commit('addDoggo', newState);
+
+    Expect(doggoState.state.doggos[2]).toEqual(newState);
+  }
+
+  @Test(`Access a store's dynamic getters`)
+  public accessGetterTest() {
+    Expect(doggoState.getters.oldestDoggo).toBeDefined();
+    Expect(doggoState.getters.oldestDoggo).toEqual({ name: 'Rover', breed: DoggoBreed.Basset, age: 15 });
   }
 }

@@ -9,7 +9,9 @@ export type ConstructorOf<C> = { new (...args: any[]): C };
 export type KnownKeys<T> = { [K in keyof T]: string extends K ? never : number extends K ? never : K } extends {
   [_ in keyof T]: infer U
 }
-  ? U
+  ? U extends keyof T
+    ? U
+    : never
   : never;
 export type MappedKnownKeys<T> = Pick<T, Exclude<KnownKeys<T>, symbol>>;
 export type ReturnTypeOrPlainProperty<T> = T extends (...args: any[]) => any ? ReturnType<T> : T;
@@ -25,7 +27,7 @@ export type StateInterfaceFromModule<
       [P in Exclude<
         KnownKeys<T['state']>,
         Exclude<KnownKeys<VuexTsModule<any, any, any, any, any, any>>, symbol>
-      >]: Exclude<T['state'], Exclude<KnownKeys<VuexTsModule<any, any, any, any, any, any>>, symbol>>[P]
+      >]: Exclude<KnownKeys<T['state']>, Exclude<KnownKeys<VuexTsModule<any, any, any, any, any, any>>, symbol>>[P]
     }
   : never;
 
@@ -60,7 +62,7 @@ export type ChildState<T extends ModuleChildren> = {
 export type MappedModuleChildren<T extends ModuleChildren> = {
   [P in Exclude<KnownKeys<T>, KnownKeys<VuexTsModule<any, any, any, any, any, any>>>]: Pick<
     ReturnType<T[P]>,
-    Exclude<KnownKeys<VuexTsModule<any, any, any, any, any, any>>, 'unregister' | 'register' | 'toStore'>
+    Exclude<KnownKeys<VuexTsModule<any, any, any, any, any, any>>, 'unregister' | 'register' | 'toStore' | symbol>
   >
 };
 

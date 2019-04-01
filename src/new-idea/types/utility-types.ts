@@ -38,7 +38,8 @@ export type GetParent<T extends ModulePart> = InstanceType<ReturnType<T[typeof p
 export type GetParentTypeMetadata<T extends ModulePart> = GetParent<T>[typeof typeMetadata];
 
 export type ChildState<T extends ModuleChildren> = {
-  [P in Exclude<KnownKeys<T>, symbol>]: InstanceType<ReturnType<T[P]>>[typeof typeMetadata][MetadataModuleState]
+  [P in keyof T]: InstanceType<ReturnType<T[P]>>[typeof typeMetadata][MetadataModuleState] &
+    ChildState<InstanceType<ReturnType<T[P]>>[typeof typeMetadata][MetadataChildren]>
 };
 
 // tslint:disable:prettier

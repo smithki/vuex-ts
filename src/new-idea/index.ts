@@ -7,7 +7,6 @@ class MyGetters extends ModuleGetters {
 
   get test() {
     this.state.hello;
-    this.state.childOne;
     this.rootState.asdf;
     return 'hello';
   }
@@ -30,9 +29,8 @@ class MyActions extends ModuleActions {
 }
 
 class MyChildren extends ModuleChildren {
-  [parent] = () => MyModule;
-
-  childOne = () => {};
+  childOne = () => MyModule;
+  childTwo = () => MyModule;
 }
 
 class MyModule extends VuexTsModule<{ hello: string; qwerty: boolean }, { asdf: number }> {

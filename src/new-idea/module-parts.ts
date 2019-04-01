@@ -9,7 +9,7 @@ import {
 } from './types/utility-types';
 import { VuexTsModule } from './vuex-ts-module';
 
-// -- Base module part ------------------------------------------------------ //
+// --- Base module part ----------------------------------------------------- //
 
 export abstract class ModulePart {
   public abstract [parent]: () => ConstructorOf<VuexTsModule>;
@@ -25,7 +25,7 @@ export abstract class ModuleGetters extends ModulePart {
 // --- Mutations ------------------------------------------------------------ //
 
 export abstract class ModuleMutations extends ModulePart {
-  state: InferModuleStateFromParent<this>;
+  state: InferModuleStateFromParent<this> & InferChildStateFromParent<this>;
 
   [key: string]: (payload?: any) => void;
 }
@@ -33,7 +33,7 @@ export abstract class ModuleMutations extends ModulePart {
 // --- Actions -------------------------------------------------------------- //
 
 export abstract class ModuleActions extends ModulePart {
-  state: InferModuleStateFromParent<this>;
+  state: InferModuleStateFromParent<this> & InferChildStateFromParent<this>;
   rootState: InferRootStateFromParent<this>;
 
   [key: string]: (payload?: any) => Promise<any>;
@@ -42,5 +42,7 @@ export abstract class ModuleActions extends ModulePart {
 // --- Child modules -------------------------------------------------------- //
 
 export abstract class ModuleChildren extends ModulePart {
+  [parent]: never;
+
   [key: string]: () => ConstructorOf<VuexTsModule>;
 }

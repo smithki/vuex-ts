@@ -7,12 +7,12 @@ import { CompositeVuexTsModule } from './types';
 
 const vuexTsStoreRelationships = new Map<symbol, Store<any>>();
 const vuexTsNamespaceRelationships = new Map<symbol, string[]>();
-const vuexTsModuleIdRelationships = new Map<symbol, VuexTsModule<any, any, any, any, any, any>>();
+const vuexTsModuleIdRelationships = new Map<symbol, VuexTsModule>();
 
 // --- Business logic ------------------------------------------------------- //
 
 /** Generate a namespace key for use in Vuex `dispatch` and `commit` method arguments. */
-export function qualifyNamespace(mod: VuexTsModule<any, any, any, any, any, any>): string {
+export function qualifyNamespace(mod: VuexTsModule): string {
   return vuexTsNamespaceRelationships.has(mod[id])
     ? `${vuexTsNamespaceRelationships.get(mod[id])!.join('/')}`
     : mod.name;
@@ -20,7 +20,7 @@ export function qualifyNamespace(mod: VuexTsModule<any, any, any, any, any, any>
 
 /** Bind a VuexTs module to a Vuex store instance. */
 export function bindModuleToStore(
-  mod: VuexTsModule<any, any, any, any, any, any>,
+  mod: VuexTsModule,
   store: Store<any>,
   parentModuleNames: string[] = [],
   isModNested: boolean = false,
@@ -47,7 +47,7 @@ export function bindModuleToStore(
 }
 
 /** Unbind a VuexTs module from its currently bound Vuex store instance. */
-export function unbindModuleFromStore(mod: VuexTsModule<any, any, any, any, any, any>, isModNested: boolean = false) {
+export function unbindModuleFromStore(mod: VuexTsModule, isModNested: boolean = false) {
   if (!isModNested) getStore(mod).unregisterModule(vuexTsNamespaceRelationships.get(mod[id])!);
   vuexTsStoreRelationships.delete(mod[id]);
   vuexTsNamespaceRelationships.delete(mod[id]);
@@ -56,17 +56,17 @@ export function unbindModuleFromStore(mod: VuexTsModule<any, any, any, any, any,
 }
 
 /** Check if a module is already bound to a store. */
-export function moduleIsBound(mod: VuexTsModule<any, any, any, any, any, any>) {
+export function moduleIsBound(mod: VuexTsModule) {
   return vuexTsStoreRelationships.has(mod[id]);
 }
 
 /** Get the Vuex store instance assciated with the given module. */
-export function getStore(mod: VuexTsModule<any, any, any, any, any, any>): Store<any> {
+export function getStore(mod: VuexTsModule): Store<any> {
   return vuexTsStoreRelationships.get(mod[id]) as Store<any>;
 }
 
 /** Get the module associated with the given ID. */
-export function getModule(id: symbol): VuexTsModule<any, any, any, any, any, any> | undefined {
+export function getModule(id: symbol): VuexTsModule | undefined {
   return vuexTsModuleIdRelationships.has(id) ? vuexTsModuleIdRelationships.get(id) : undefined;
 }
 

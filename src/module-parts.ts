@@ -13,12 +13,21 @@ import {
   staticMutations,
   vuexModule,
 } from './symbols';
-import { CompositeVuexTsModule, StaticActions, StaticChildren, StaticGetters, StaticMutations } from './types';
+import {
+  ChildState,
+  CompositeVuexTsModule,
+  InferChildren,
+  InferModuleState,
+  StaticActions,
+  StaticChildren,
+  StaticGetters,
+  StaticMutations,
+} from './types';
 
 // --- Getters -------------------------------------------------------------- //
 
-export abstract class ModuleGetters<ModuleState, RootState = any> {
-  constructor(parentModule: VuexTsModule<ModuleState, RootState, any, any, any, any>) {
+export abstract class ModuleGetters {
+  constructor(parentModule: VuexTsModule) {
     return new Proxy(this, {
       get: (target, prop, receiver) => {
         if (typeof prop !== 'symbol') {
@@ -62,14 +71,14 @@ export abstract class ModuleGetters<ModuleState, RootState = any> {
     return result;
   }
 
-  [state]: ModuleState;
-  [rootState]: RootState;
+  // state: InferModuleState<T> & ChildState<InferChildren<T>>;
+  // [rootState]: RootState;
 }
 
 // --- Mutations ------------------------------------------------------------ //
 
-export abstract class ModuleMutations<ModuleState> {
-  constructor(parentModule: VuexTsModule<ModuleState, any, any, any, any, any>) {
+export abstract class ModuleMutations<ModuleState = any> {
+  constructor(parentModule: VuexTsModule) {
     return new Proxy(this, {
       get: (target, prop, receiver) => {
         if (typeof prop !== 'symbol') {
@@ -118,8 +127,8 @@ export abstract class ModuleMutations<ModuleState> {
 
 // --- Actions -------------------------------------------------------------- //
 
-export abstract class ModuleActions<ModuleState, RootState = any> {
-  constructor(parentModule: VuexTsModule<ModuleState, RootState, any, any, any, any>) {
+export abstract class ModuleActions<ModuleState = any, RootState = any> {
+  constructor(parentModule: VuexTsModule) {
     return new Proxy(this, {
       get: (target, prop, receiver) => {
         if (typeof prop !== 'symbol') {
@@ -194,7 +203,7 @@ export abstract class ModuleChildren {
     return result;
   }
 
-  [key: string]: () => CompositeVuexTsModule<any, any, any, any, any, any>;
+  [key: string]: () => CompositeVuexTsModule;
 
   // Disallow reserved keys
   name: never;

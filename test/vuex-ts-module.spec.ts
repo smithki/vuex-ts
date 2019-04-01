@@ -13,7 +13,7 @@ import { moduleIsBound } from '../src/lib';
 @TestFixture('VuexTsModule Tests')
 export class VuexTsModuleTestFixture {
   store: Store<any>;
-  dummyModule: CompositeVuexTsModule<any, any, any, any, any, any>;
+  dummyModule: CompositeVuexTsModule;
 
   @SetupFixture
   setupFixture() {

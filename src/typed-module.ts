@@ -1,4 +1,5 @@
 import { Module, Store } from 'vuex';
+
 import {
   InvalidStoreError,
   ModuleBoundToDifferentStoreError,
@@ -10,6 +11,7 @@ import {
   RootModuleUnregisterError,
   UndefinedStoreError,
 } from './exceptions';
+import { VuexTsFactories } from './factories';
 import {
   bindModuleToStore,
   getModule,
@@ -51,12 +53,12 @@ import {
 // --- Module --------------------------------------------------------------- //
 
 export class VuexTsModule<
-  ModuleState,
-  RootState,
-  Getters extends ModuleGetters<ModuleState, RootState>,
-  Mutations extends ModuleMutations<ModuleState>,
-  Actions extends ModuleActions<ModuleState, RootState>,
-  Modules extends ModuleChildren
+  ModuleState = any,
+  RootState = any,
+  Getters extends ModuleGetters = any,
+  Mutations extends ModuleMutations = any,
+  Actions extends ModuleActions = any,
+  Modules extends ModuleChildren = any
 > {
   readonly [id]: symbol;
   readonly [staticGetters]: StaticGetters;
@@ -141,7 +143,7 @@ export class VuexTsModule<
     // --- Build `clone(...)` method --- //
 
     this.clone = name => {
-      return vuexTsBuilder<ModuleState, RootState>({
+      return VuexTsFactories.moduleBuilder<ModuleState, RootState>({
         name: name || moduleName,
         state: moduleState,
       }).inject({
@@ -253,7 +255,7 @@ export class VuexTsModule<
    * @readonly
    * @memberof VuexTsModule
    */
-  get namespaceKey() {
+  get namespaceKey(): string {
     if (moduleIsBound(this)) {
       if (this[isRoot]) return '';
       return qualifyNamespace(this);
@@ -402,44 +404,4 @@ export class VuexTsModuleBuilder<ModuleState, RootState> {
       state: this.state,
     }) as any;
   }
-}
-
-// --- Module Factory ------------------------------------------------------- //
-
-/**
- * Create an instance of VuexTSModuleBuilder. This class wraps the instantiation
- * of VuexTsModule to enable better type inference.
- *
- * @example
- * // Compose your module:
- * const myModule = vuexTsBuilder({
- *   name: 'myModule',
- *   state,
- * }).inject({
- *   getters,
- *   mutations,
- *   actions,
- *   modules,
- * });
- *
- * // Register your module dynamically to a Vuex store:
- * myModule.register(store);
- *
- * // Likewise, you can unregister your module:
- * myModule.unregister();
- *
- * // Or create the Vuex store directly from the module:
- * myModule.toStore();
- */
-export function vuexTsBuilder<ModuleState, RootState>({
-  name,
-  state,
-}: {
-  name: string;
-  state?: ModuleState | (() => ModuleState);
-}): VuexTsModuleBuilder<ModuleState, RootState> {
-  return new VuexTsModuleBuilder<ModuleState, RootState>({
-    name,
-    state: state || ({} as any),
-  });
 }

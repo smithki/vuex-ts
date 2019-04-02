@@ -1,7 +1,9 @@
 // --- Imports -------------------------------------------------------------- //
 
-// import { CommitFunc, DispatchFunc, MappedModuleChildren } from '..';
+// Vendor
 import { Module, Store } from 'vuex';
+
+// Internal
 import {
   InvalidStoreError,
   ModuleBoundToDifferentStoreError,

@@ -164,8 +164,8 @@ export class MyModuleChildren extends ModuleChildren {
 Nested modules are accessible from the top-level of their parent, like this:
 
 ```ts
-// It's just another instance of CompositeVuexTsModule,
-// so you have access to `store`, `commit`, `dispatch`, etc.
+// It's just another VuexTsModule object,
+// so you have access to `state`, `commit`, `dispatch`, etc.
 myModule.someNestedModule
 ```
 

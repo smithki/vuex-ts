@@ -1,12 +1,4 @@
-import {
-  ModuleChildren,
-  ModuleGetters,
-  ModuleMutations,
-  state,
-  usedIn,
-  VuexTsModule,
-  vuexTsModuleBuilder,
-} from '../src';
+import { get, ModuleChildren, ModuleGetters, ModuleMutations, usedIn, VuexTsModule, vuexTsModuleBuilder } from '../src';
 import { DoggoModule } from './doggos';
 import { RootState } from './root-state';
 
@@ -31,11 +23,11 @@ export class KittenGetters extends ModuleGetters {
   [usedIn] = () => KittenModule;
 
   get oldestKitten() {
-    return this[state].kittens.reduce((a, b) => (a.age > b.age ? a : b));
+    return this[get.state].kittens.reduce((a, b) => (a.age > b.age ? a : b));
   }
 
   get youngestKitten() {
-    return this[state].kittens.reduce((a, b) => (a.age < b.age ? a : b));
+    return this[get.state].kittens.reduce((a, b) => (a.age < b.age ? a : b));
   }
 }
 
@@ -45,7 +37,7 @@ export class KittenMutations extends ModuleMutations {
   [usedIn] = () => KittenModule;
 
   addKitten(payload: Kitten) {
-    this[state].kittens.push(payload);
+    this[get.state].kittens.push(payload);
   }
 }
 

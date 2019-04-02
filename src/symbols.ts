@@ -1,9 +1,9 @@
 // --- Exposed -------------------------------------------------------------- //
 
-export const state = Symbol('state');
-export const rootState = Symbol('state');
-export const context = Symbol('context');
-export const module = Symbol('module');
+export const getState = Symbol('state');
+export const getRootState = Symbol('state');
+export const getContext = Symbol('context');
+export const getModule = Symbol('Module');
 export const usedIn = Symbol('usedIn');
 
 // -------------------------------------------------------------------------- //

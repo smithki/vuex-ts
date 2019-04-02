@@ -45,7 +45,7 @@ export abstract class VuexTsModule<TModuleState = any, TRootState = any> {
   public abstract name: string;
 
   /** The initial state (and state interface) of this module. */
-  public abstract state: () => TModuleState;
+  public state: () => TModuleState;
 
   public getters?: () => Types.ConstructorOf<ModuleGetters>;
   public mutations?: () => Types.ConstructorOf<ModuleMutations>;

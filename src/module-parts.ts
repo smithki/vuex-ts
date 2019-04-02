@@ -1,42 +1,46 @@
+// --- Imports -------------------------------------------------------------- //
+
+// Vendor
 import { ActionContext } from 'vuex';
-import { VuexTsModule } from '.';
+
+// Internal
 import { ModuleNotBoundToStoreError } from './exceptions';
 import { getStore, moduleIsBound } from './lib';
-import {
-  context,
-  isRoot,
-  rootState,
-  state,
-  staticActions,
-  staticChildren,
-  staticGetters,
-  staticMutations,
-  vuexModule,
-} from './symbols';
-import {
-  ChildState,
-  CompositeVuexTsModule,
-  InferChildren,
-  InferModuleState,
-  StaticActions,
-  StaticChildren,
-  StaticGetters,
-  StaticMutations,
-} from './types';
+import * as Symbols from './symbols';
+import * as Types from './types';
+import { VuexTsModule, vuexTsModuleBuilder, VuexTsModuleInstance, VuexTsModuleInstanceProxy } from './vuex-ts-module';
+
+// --- Base module part ----------------------------------------------------- //
+
+export abstract class ModulePart {
+  protected [Symbols.vuexTsModuleInstance]: VuexTsModuleInstance<any>;
+  public abstract [Symbols.usedIn]: () => Types.ConstructorOf<VuexTsModule>;
+
+  constructor(vuexTsModuleInstance: VuexTsModuleInstance<any>) {
+    this[Symbols.vuexTsModuleInstance] = vuexTsModuleInstance;
+  }
+}
+
+function filterReservedKeysPredicate(name: string) {
+  const reservedKeys = ['constructor', 'usedIn', 'context', 'state', 'rootState', 'module'];
+  return !reservedKeys.includes(name);
+}
 
 // --- Getters -------------------------------------------------------------- //
 
-export abstract class ModuleGetters {
-  constructor(parentModule: VuexTsModule) {
+export abstract class ModuleGetters extends ModulePart {
+  constructor(vuexTsModuleInstance: VuexTsModuleInstance<any>) {
+    super(vuexTsModuleInstance);
+
     return new Proxy(this, {
       get: (target, prop, receiver) => {
         if (typeof prop !== 'symbol') {
-          if (!moduleIsBound(parentModule)) {
-            throw new ModuleNotBoundToStoreError(parentModule.name, 'getters');
+          if (!moduleIsBound(vuexTsModuleInstance)) {
+            throw new ModuleNotBoundToStoreError(vuexTsModuleInstance.name, 'getters');
           }
 
-          if (parentModule[isRoot]) return getStore(parentModule).getters[prop];
-          return getStore(parentModule).getters[`${parentModule.namespaceKey}/${prop}`];
+          if (vuexTsModuleInstance[Symbols.isRoot]) return getStore(vuexTsModuleInstance).getters[prop];
+          return getStore(vuexTsModuleInstance).getters[`${vuexTsModuleInstance.namespaceKey}/${prop}`];
         }
 
         return Reflect.get(target, prop, receiver);
@@ -44,9 +48,9 @@ export abstract class ModuleGetters {
     });
   }
 
-  get [staticGetters]() {
-    const methodNames = Object.getOwnPropertyNames(Object.getPrototypeOf(this)).filter(name => name !== 'constructor');
-    const result: StaticGetters = {};
+  get [Symbols.staticGetters]() {
+    const methodNames = Object.getOwnPropertyNames(Object.getPrototypeOf(this)).filter(filterReservedKeysPredicate);
+    const result: Types.StaticGetters = {};
 
     for (const name of methodNames) {
       const proto = Object.getPrototypeOf(this);
@@ -56,8 +60,9 @@ export abstract class ModuleGetters {
       result[name] = (vuexState, vuexGetters, vuexRootState) => {
         const getContext = new Proxy(unwrappedProxy, {
           get: (target, prop, receiver) => {
-            if (prop === state) return vuexState;
-            if (prop === rootState) return vuexRootState;
+            if (prop === 'state') return vuexState;
+            if (prop === 'rootState') return vuexRootState;
+            if (prop === 'module') return this[Symbols.vuexTsModuleInstance];
 
             // Unwrap the proxy and return the getter value.
             return Reflect.get(target, prop, receiver);
@@ -71,24 +76,32 @@ export abstract class ModuleGetters {
     return result;
   }
 
-  // state: InferModuleState<T> & ChildState<InferChildren<T>>;
-  // [rootState]: RootState;
+  public state: Types.InferModuleState<this> & Types.InferChildState<this>;
+  public rootState: Types.InferRootState<this>;
+  public module: VuexTsModuleInstanceProxy<Types.InferVuexTsModule<this>> & Types.InferChildModuleProxies<this>;
 }
 
 // --- Mutations ------------------------------------------------------------ //
 
-export abstract class ModuleMutations<ModuleState = any> {
-  constructor(parentModule: VuexTsModule) {
+export abstract class ModuleMutations extends ModulePart {
+  constructor(vuexTsModuleInstance: VuexTsModuleInstance<any>) {
+    super(vuexTsModuleInstance);
+
     return new Proxy(this, {
       get: (target, prop, receiver) => {
         if (typeof prop !== 'symbol') {
-          if (!moduleIsBound(parentModule)) {
-            throw new ModuleNotBoundToStoreError(parentModule.name, 'commit');
+          if (!moduleIsBound(vuexTsModuleInstance)) {
+            throw new ModuleNotBoundToStoreError(vuexTsModuleInstance.name, 'commit');
           }
 
           return (payload: any) => {
-            if (parentModule[isRoot]) getStore(parentModule).commit(prop as string, payload, { root: true }) as any;
-            else getStore(parentModule).commit(`${parentModule.namespaceKey}/${prop}`, payload, { root: true }) as any;
+            if (vuexTsModuleInstance[Symbols.isRoot]) {
+              getStore(vuexTsModuleInstance).commit(prop as string, payload, { root: true }) as any;
+            } else {
+              getStore(vuexTsModuleInstance).commit(`${vuexTsModuleInstance.namespaceKey}/${prop}`, payload, {
+                root: true,
+              }) as any;
+            }
           };
         }
 
@@ -97,9 +110,9 @@ export abstract class ModuleMutations<ModuleState = any> {
     });
   }
 
-  get [staticMutations]() {
-    const methodNames = Object.getOwnPropertyNames(Object.getPrototypeOf(this)).filter(name => name !== 'constructor');
-    const result: StaticMutations = {};
+  get [Symbols.staticMutations]() {
+    const methodNames = Object.getOwnPropertyNames(Object.getPrototypeOf(this)).filter(filterReservedKeysPredicate);
+    const result: Types.StaticMutations = {};
 
     for (const name of methodNames) {
       const proto = Object.getPrototypeOf(this);
@@ -108,7 +121,8 @@ export abstract class ModuleMutations<ModuleState = any> {
       result[name] = (vuexState, payload) => {
         const mutContext = new Proxy(unwrappedProxy, {
           get: (target, prop, receiver) => {
-            if (prop === state) return vuexState;
+            if (prop === 'state') return vuexState;
+            if (prop === 'module') return this[Symbols.vuexTsModuleInstance];
 
             return Reflect.get(target, prop, receiver);
           },
@@ -121,29 +135,33 @@ export abstract class ModuleMutations<ModuleState = any> {
     return result;
   }
 
-  [state]: ModuleState;
+  public state: Types.InferModuleState<this> & Types.InferChildState<this>;
+  // @ts-ignore -- Ignoring this because we know the index signature does not match and we don't care.
+  public module: VuexTsModuleInstanceProxy<Types.InferVuexTsModule<this>> & Types.InferChildModuleProxies<this>;
   [key: string]: (payload?: any) => void;
 }
 
 // --- Actions -------------------------------------------------------------- //
 
-export abstract class ModuleActions<ModuleState = any, RootState = any> {
-  constructor(parentModule: VuexTsModule) {
+export abstract class ModuleActions extends ModulePart {
+  constructor(vuexTsModuleInstance: VuexTsModuleInstance<any>) {
+    super(vuexTsModuleInstance);
+
     return new Proxy(this, {
       get: (target, prop, receiver) => {
         if (typeof prop !== 'symbol') {
-          if (!moduleIsBound(parentModule)) {
-            throw new ModuleNotBoundToStoreError(parentModule.name, 'dispatch');
+          if (!moduleIsBound(vuexTsModuleInstance)) {
+            throw new ModuleNotBoundToStoreError(vuexTsModuleInstance.name, 'dispatch');
           }
 
           return (payload: any) => {
-            if (parentModule[isRoot]) {
-              return getStore(parentModule).dispatch(prop as any, payload, {
+            if (vuexTsModuleInstance[Symbols.isRoot]) {
+              return getStore(vuexTsModuleInstance).dispatch(prop as any, payload, {
                 root: true,
               }) as any;
             }
 
-            return getStore(parentModule).dispatch(`${parentModule.namespaceKey}/${prop}`, payload, {
+            return getStore(vuexTsModuleInstance).dispatch(`${vuexTsModuleInstance.namespaceKey}/${prop}`, payload, {
               root: true,
             }) as any;
           };
@@ -154,9 +172,9 @@ export abstract class ModuleActions<ModuleState = any, RootState = any> {
     });
   }
 
-  get [staticActions]() {
-    const methodNames = Object.getOwnPropertyNames(Object.getPrototypeOf(this)).filter(name => name !== 'constructor');
-    const result: StaticActions = {};
+  get [Symbols.staticActions]() {
+    const methodNames = Object.getOwnPropertyNames(Object.getPrototypeOf(this)).filter(filterReservedKeysPredicate);
+    const result: Types.StaticActions = {};
 
     for (const name of methodNames) {
       const proto = Object.getPrototypeOf(this);
@@ -165,9 +183,11 @@ export abstract class ModuleActions<ModuleState = any, RootState = any> {
       result[name] = async (vuexContext, payload) => {
         const actContext = new Proxy(unwrappedProxy, {
           get: (target, prop, reciever) => {
-            if (prop === context) return vuexContext;
-            if (prop === state) return vuexContext.state;
-            if (prop === rootState) return vuexContext.rootState;
+            if (prop === 'context') return vuexContext;
+            if (prop === 'state') return vuexContext.state;
+            if (prop === 'rootState') return vuexContext.rootState;
+            if (prop === 'module') return this[Symbols.vuexTsModuleInstance];
+
             return Reflect.get(target, prop, reciever);
           },
         });
@@ -179,41 +199,40 @@ export abstract class ModuleActions<ModuleState = any, RootState = any> {
     return result;
   }
 
-  [state]: ModuleState;
-  [rootState]: RootState;
-  [context]: ActionContext<ModuleState, RootState>;
+  public state: Types.InferModuleState<this> & Types.InferChildState<this>;
+  public rootState: Types.InferRootState<this>;
+  // @ts-ignore -- Ignoring this because we know the index signature does not match and we don't care.
+  public context: ActionContext<Types.InferModuleState<this>, Types.InferRootState<this>>;
+  // @ts-ignore -- Ignoring this because we know the index signature does not match and we don't care.
+  public module: VuexTsModuleInstanceProxy<Types.InferVuexTsModule<this>> & Types.InferChildModuleProxies<this>;
+  // @ts-ignore -- Ignoring this because we know the index signature does not match and we don't care.
   [key: string]: (payload?: any) => Promise<any>;
 }
 
-// --- Nested modules ------------------------------------------------------- //
+// --- Child modules -------------------------------------------------------- //
 
-export abstract class ModuleChildren {
-  get [staticChildren]() {
+export abstract class ModuleChildren extends ModulePart {
+  get [Symbols.children]() {
     const moduleNames = [
-      ...Object.getOwnPropertyNames(this),
-      ...Object.getOwnPropertyNames(Object.getPrototypeOf(this)).filter(name => name !== 'constructor'),
+      ...Object.getOwnPropertyNames(this).filter(filterReservedKeysPredicate),
+      ...Object.getOwnPropertyNames(Object.getPrototypeOf(this)).filter(filterReservedKeysPredicate),
     ];
-    const result: StaticChildren = {};
+
+    const result: {
+      staticChildren: Types.StaticChildren;
+      vuexTsModuleInstances: { [key: string]: VuexTsModuleInstance<any> };
+    } = {
+      staticChildren: {},
+      vuexTsModuleInstances: {},
+    };
 
     for (const name of moduleNames) {
-      this[name] = (this[name] as any)().clone(name);
-      result[name] = (this[name] as any)[vuexModule];
+      result.vuexTsModuleInstances[name] = vuexTsModuleBuilder(this[name]()).clone(name);
+      result.staticChildren[name] = result.vuexTsModuleInstances[name][Symbols.vuexModule];
     }
 
     return result;
   }
 
-  [key: string]: () => CompositeVuexTsModule;
-
-  // Disallow reserved keys
-  name: never;
-  getters: never;
-  commit: never;
-  dispatch: never;
-  clone: never;
-  state: never;
-  namespaceKey: never;
-  register: never;
-  unregister: never;
-  toStore: never;
+  [key: string]: () => Types.ConstructorOf<VuexTsModule>;
 }

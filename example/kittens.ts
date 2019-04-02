@@ -1,5 +1,5 @@
-import { ChildState, CompositeVuexTsModule, ConstructorOf, InferChildren, InferModuleState, ModuleChildren, ModuleGetters, ModuleMutations, state, VuexTsFactories } from '../src';
-import { doggoState } from './doggos';
+import { ModuleChildren, ModuleGetters, ModuleMutations, usedIn, VuexTsModule, vuexTsModuleBuilder } from '../src';
+import { DoggoModule } from './doggos';
 import { RootState } from './root-state';
 
 export enum KittenBreed {
@@ -17,46 +17,44 @@ export interface Kitten {
 export interface KittenState {
   kittens: Kitten[];
 }
-
-type Abc<T> = T extends CompositeVuexTsModule<infer A, infer B, any, infer D, infer E, infer F> ?  CompositeVuexTsModule<A, B, never, D, E, F> : never;
-
 // --- Getters --- //
-function inject<T extends () => CompositeVuexTsModule>(a: T, b: typeof ModuleGetters): ConstructorOf<ModuleGetters<InferModuleState<Abc<ReturnType<T>>>, ChildState<InferChildren<Abc<ReturnType<T>>>>>> {
-  return ModuleGetters as any;
-}
 
-const xyz: Abc<typeof kittenState>;
+export class KittenGetters extends ModuleGetters {
+  [usedIn] = () => KittenModule;
 
-export class KittenGetters extends ModuleGetters<typeof kittenState> {
   get oldestKitten() {
-    this.state.;
-    return this[state].kittens.reduce((a, b) => (a.age > b.age ? a : b));
+    return this.state.kittens.reduce((a, b) => (a.age > b.age ? a : b));
   }
 
   get youngestKitten() {
-    return this[state].kittens.reduce((a, b) => (a.age < b.age ? a : b));
+    return this.state.kittens.reduce((a, b) => (a.age < b.age ? a : b));
   }
 }
 
 // --- Mutations --- //
 
-export class KittenMutations extends ModuleMutations<KittenState> {
+export class KittenMutations extends ModuleMutations {
+  [usedIn] = () => KittenModule;
+
   addKitten(payload: Kitten) {
-    this[state].kittens.push(payload);
+    this.state.this.state.kittens.push(payload);
   }
 }
 
 // --- Nested modules --- //
 
 export class KittenChildren extends ModuleChildren {
-  doggoNested = () => doggoState;
+  [usedIn] = () => KittenModule;
+
+  doggoNested = () => DoggoModule;
 }
 
 // --- Module --- //
 
-export const kittenState = VuexTsFactories.moduleBuilder<KittenState, RootState>({
-  name: 'kittenState',
-  state: () => ({
+export class KittenModule extends VuexTsModule<KittenState, RootState> {
+  name = 'kittenState';
+
+  state = () => ({
     kittens: [
       {
         name: 'Mittens',
@@ -64,24 +62,11 @@ export const kittenState = VuexTsFactories.moduleBuilder<KittenState, RootState>
         age: 4,
       },
     ],
-  }),
-}).inject({
-  getters: KittenGetters,
-  mutations: KittenMutations,
-  modules: KittenChildren,
-});
+  });
 
-class B<T> {
-  testt: T;
+  getters = () => KittenGetters;
+  mutations = () => KittenMutations;
+  modules = () => KittenChildren;
 }
 
-class C extends B<M> {
-  constructor() {
-    super();
-    this.testt
-  }
-}
-
-class M {
-  b = C;
-}
+export const kittenState = vuexTsModuleBuilder(KittenModule);

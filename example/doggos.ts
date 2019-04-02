@@ -1,4 +1,4 @@
-import { ModuleGetters, ModuleMutations, state, vuexTsBuilder } from '../src';
+import { ModuleGetters, ModuleMutations, usedIn, VuexTsModule, vuexTsModuleBuilder } from '../src';
 import { RootState } from './root-state';
 
 export enum DoggoBreed {
@@ -18,29 +18,34 @@ export interface DoggoState {
 
 // --- Getters --- //
 
-export class DoggoGetters extends ModuleGetters<DoggoState, RootState> {
+export class DoggoGetters extends ModuleGetters {
+  [usedIn] = () => DoggoModule;
+
   get oldestDoggo() {
-    return this[state].doggos.reduce((a, b) => (a.age > b.age ? a : b));
+    return this.state.doggos.reduce((a, b) => (a.age > b.age ? a : b));
   }
 
   get youngestDoggo() {
-    return this[state].doggos.reduce((a, b) => (a.age < b.age ? a : b));
+    return this.state.doggos.reduce((a, b) => (a.age < b.age ? a : b));
   }
 }
 
 // --- Mutations --- //
 
-export class DoggoMutations extends ModuleMutations<DoggoState> {
+export class DoggoMutations extends ModuleMutations {
+  [usedIn] = () => DoggoModule;
+
   addDoggo(payload: Doggo) {
-    this[state].doggos.push(payload);
+    this.state.doggos.push(payload);
   }
 }
 
 // --- Module --- //
 
-export const doggoState = vuexTsBuilder<DoggoState, RootState>({
-  name: 'doggoState',
-  state: () => ({
+export class DoggoModule extends VuexTsModule<DoggoState, RootState> {
+  name = 'doggoState';
+
+  state = () => ({
     doggos: [
       {
         name: 'Fido',
@@ -48,8 +53,10 @@ export const doggoState = vuexTsBuilder<DoggoState, RootState>({
         age: 7,
       },
     ],
-  }),
-}).inject({
-  getters: DoggoGetters,
-  mutations: DoggoMutations,
-});
+  });
+
+  getters = () => DoggoGetters;
+  mutations = () => DoggoMutations;
+}
+
+export const doggoState = vuexTsModuleBuilder(DoggoModule);

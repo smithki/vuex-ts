@@ -3,6 +3,15 @@
 // import { CommitFunc, DispatchFunc, MappedModuleChildren } from '..';
 import { Module, Store } from 'vuex';
 import {
+  InvalidStoreError,
+  ModuleBoundToDifferentStoreError,
+  ModuleBoundToSameStoreError,
+  ModuleNotBoundToStoreError,
+  NestedModuleUnregisterError,
+  RootModuleUnregisterError,
+  UndefinedStoreError,
+} from './exceptions';
+import {
   bindModuleToStore,
   getModule,
   getStore,
@@ -13,7 +22,7 @@ import {
 } from './lib';
 import { ModuleActions, ModuleChildren, ModuleGetters, ModuleMutations } from './module-parts';
 import * as Symbols from './symbols';
-import * as Types from './types/utility-types';
+import * as Types from './types';
 
 // -------------------------------------------------------------------------- //
 
@@ -54,7 +63,6 @@ export class VuexTsModuleInstance<TModule extends VuexTsModule> {
   public readonly [Symbols.staticChildren]: Types.StaticChildren;
   public readonly [Symbols.children]: Types.GetChildren<TModule>;
   public readonly [Symbols.initialState]: any;
-
   public [Symbols.isRoot]: boolean;
   public [Symbols.isNested]: boolean;
   public [Symbols.parentId]: symbol | undefined;
@@ -148,10 +156,10 @@ export class VuexTsModuleInstance<TModule extends VuexTsModule> {
     if (modInst.modules) {
       const ModulesConstructor = modInst.modules();
       const childrenInst = new ModulesConstructor();
-      const sc = (childrenInst as any)[Symbols.staticChildren];
-      this[Symbols.staticChildren] = sc;
-      this[Symbols.children] = modInst as any;
-      return Object.assign(this, (modInst as any) as Types.GetChildModuleProxies<TModule>);
+      const { staticChildren, vuexTsModuleInstances } = childrenInst[Symbols.children];
+      this[Symbols.staticChildren] = staticChildren;
+      this[Symbols.children] = vuexTsModuleInstances as any;
+      return Object.assign(this, (vuexTsModuleInstances as any) as Types.GetChildModuleProxies<TModule>);
     }
 
     this[Symbols.staticChildren] = this[Symbols.children] = {} as any;
@@ -159,13 +167,7 @@ export class VuexTsModuleInstance<TModule extends VuexTsModule> {
 
   // --- Vuex-related props/methods ----------------------------------------- //
 
-  /**
-   * This module's dynamic state.
-   *
-   * @readonly
-   * @type {(ModuleState & ChildState<Modules>)}
-   * @memberof VuexTsModule
-   */
+  /** This module's dynamic state. */
   get state(): Types.GetState<TModule> {
     if (moduleIsBound(this as any)) {
       if (this[Symbols.isRoot]) return getStore(this as any).state;
@@ -180,38 +182,23 @@ export class VuexTsModuleInstance<TModule extends VuexTsModule> {
       return stateObj;
     }
 
-    return {} as any;
-
     // Raise an error is this module is not bound to a store yet.
-    // throw new ModuleNotBoundToStoreError(this.name, 'state');
+    throw new ModuleNotBoundToStoreError(this.name, 'state');
   }
 
   // --- VuexTS-related utilities ------------------------------------------- //
 
-  /**
-   * The stringified namespace key for this VuexTsModule.
-   *
-   * @readonly
-   * @memberof VuexTsModule
-   */
+  /** The stringified namespace key for this VuexTsModule. */
   get namespaceKey(): string {
     if (moduleIsBound(this as any)) {
       if (this[Symbols.isRoot]) return '';
       return qualifyNamespace(this as any);
     }
 
-    return undefined as any;
-
-    // throw new ModuleNotBoundToStoreError(this.name, 'namespaceKey');
+    throw new ModuleNotBoundToStoreError(this.name, 'namespaceKey');
   }
 
-  /**
-   * The raw underlying Vuex module for this VuexTsModule.
-   *
-   * @readonly
-   * @type {Module<ModuleState, RootState>}
-   * @memberof VuexTsModule
-   */
+  /** The raw underlying Vuex module for this VuexTsModule. */
   get [Symbols.vuexModule](): Module<Types.GetState<TModule>, any> {
     return {
       namespaced: !this[Symbols.isRoot],
@@ -227,42 +214,36 @@ export class VuexTsModuleInstance<TModule extends VuexTsModule> {
    * Register this module to the provided Vuex store.
    *
    * @param {Store<RootState>} store - The Vuex store to bind this VuexTsModule to.
-   * @returns {void}
-   * @memberof VuexTsModule
    */
   register(store: Store<any>): void {
-    // if (!store) throw new UndefinedStoreError(this.name);
-    // if (!(store instanceof Store)) throw new InvalidStoreError(this.name);
+    if (!store) throw new UndefinedStoreError(this.name);
+    if (!(store instanceof Store)) throw new InvalidStoreError(this.name);
 
     if (moduleIsBound(this as any)) {
       if (getStore(this as any) === store) {
         // If we are attempting to register to the same store, warn and skip the step.
-        // throw new ModuleBoundToSameStoreError(this.name, this.namespaceKey);
+        throw new ModuleBoundToSameStoreError(this.name, this.namespaceKey);
       } else {
         // If we are attempting to register to another Vuex store, raise an
         // error and explain possible steps to resolve the issue.
-        // throw new ModuleBoundToDifferentStoreError(this.name, this.namespaceKey);
+        throw new ModuleBoundToDifferentStoreError(this.name, this.namespaceKey);
       }
     }
 
     bindModuleToStore(this as any, store);
   }
 
-  /**
-   * Unregister this module from its bound Vuex store.
-   *
-   * @memberof VuexTsModule
-   */
+  /** Unregister this module from its bound Vuex store. */
   unregister(): void {
     if (moduleIsBound(this as any)) {
-      // if (this[Symbols.isRoot]) throw new RootModuleUnregisterError(this.name);
+      if (this[Symbols.isRoot]) throw new RootModuleUnregisterError(this.name);
       if (this[Symbols.isNested]) {
         const parentModule = getModule(this[Symbols.parentId]!);
-        // throw new NestedModuleUnregisterError(this.name, parentModule!.name, parentModule![Symbols.isRoot]);
+        throw new NestedModuleUnregisterError(this.name, parentModule!.name, parentModule![Symbols.isRoot]);
       }
       unbindModuleFromStore(this as any);
     } else {
-      // throw new ModuleNotBoundToStoreError(this.name, 'unregister');
+      throw new ModuleNotBoundToStoreError(this.name, 'unregister');
     }
   }
 
@@ -287,13 +268,22 @@ export class VuexTsModuleInstance<TModule extends VuexTsModule> {
   }
 }
 
-export abstract class VuexTsModuleBuilderProxy<TModule extends VuexTsModule> {
+/**
+ * Proxy of `VuexTsModuleInstance` used internally by `vuex-ts` to solve
+ * circular type references.
+ */
+export abstract class VuexTsModuleInstanceProxy<TModule extends VuexTsModule> {
   readonly state: Types.GetState<TModule>;
   readonly commit: Types.GetMutations<TModule>;
   readonly dispatch: Types.GetActions<TModule>;
   readonly getters: Types.GetGetters<TModule>;
 }
 
+/**
+ * Builds a strongly-typed Vuex module.
+ *
+ * @param VuexTsModuleConstructor - A `VuexTsModule` constructor.
+ */
 export function vuexTsModuleBuilder<TModule extends VuexTsModule>(
   VuexTsModuleConstructor: Types.ConstructorOf<TModule>,
 ): VuexTsModuleInstance<TModule> & Types.GetChildModuleProxies<TModule> {

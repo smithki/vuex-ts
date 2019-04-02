@@ -171,7 +171,7 @@ myModule.someNestedModule
 
 That's all there is to it! Naturally, you can choose to separate actions/mutations/getters across files or consolidate. A separation of concerns alongside strong typing is what makes VuexTs work well at scale!
 
-For a working example, see [`./example`](./example);
+For a working example, see [`./example`](./example).
 
 ## API
 

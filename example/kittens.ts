@@ -1,5 +1,5 @@
-import { ModuleChildren, ModuleGetters, ModuleMutations, state, vuexTsBuilder } from '../src';
-import { doggoState } from './doggos';
+import { get, ModuleChildren, ModuleGetters, ModuleMutations, usedIn, VuexTsModule, vuexTsModuleBuilder } from '../src';
+import { DoggoModule } from './doggos';
 import { RootState } from './root-state';
 
 export enum KittenBreed {
@@ -17,38 +17,44 @@ export interface Kitten {
 export interface KittenState {
   kittens: Kitten[];
 }
-
 // --- Getters --- //
 
-export class KittenGetters extends ModuleGetters<KittenState, RootState> {
+export class KittenGetters extends ModuleGetters {
+  [usedIn] = () => KittenModule;
+
   get oldestKitten() {
-    return this[state].kittens.reduce((a, b) => (a.age > b.age ? a : b));
+    return this[get.state].kittens.reduce((a, b) => (a.age > b.age ? a : b));
   }
 
   get youngestKitten() {
-    return this[state].kittens.reduce((a, b) => (a.age < b.age ? a : b));
+    return this[get.state].kittens.reduce((a, b) => (a.age < b.age ? a : b));
   }
 }
 
 // --- Mutations --- //
 
-export class KittenMutations extends ModuleMutations<KittenState> {
+export class KittenMutations extends ModuleMutations {
+  [usedIn] = () => KittenModule;
+
   addKitten(payload: Kitten) {
-    this[state].kittens.push(payload);
+    this[get.state].kittens.push(payload);
   }
 }
 
 // --- Nested modules --- //
 
 export class KittenChildren extends ModuleChildren {
-  doggoNested = () => doggoState;
+  [usedIn] = () => KittenModule;
+
+  doggoNested = () => DoggoModule;
 }
 
 // --- Module --- //
 
-export const kittenState = vuexTsBuilder<KittenState, RootState>({
-  name: 'kittenState',
-  state: () => ({
+export class KittenModule extends VuexTsModule<KittenState, RootState> {
+  name = 'kittenState';
+
+  state = () => ({
     kittens: [
       {
         name: 'Mittens',
@@ -56,9 +62,11 @@ export const kittenState = vuexTsBuilder<KittenState, RootState>({
         age: 4,
       },
     ],
-  }),
-}).inject({
-  getters: KittenGetters,
-  mutations: KittenMutations,
-  modules: KittenChildren,
-});
+  });
+
+  getters = () => KittenGetters;
+  mutations = () => KittenMutations;
+  modules = () => KittenChildren;
+}
+
+export const kittenState = vuexTsModuleBuilder(KittenModule);

@@ -6,8 +6,8 @@ export { usedIn } from './symbols';
 
 import { getContext, getModule, getRootState, getState } from './symbols';
 export const get = {
-  context: getContext,
-  module: getModule,
-  rootState: getRootState,
-  state: getState,
+  context: getContext as typeof getContext,
+  module: getModule as typeof getModule,
+  rootState: getRootState as typeof getRootState,
+  state: getState as typeof getState,
 };

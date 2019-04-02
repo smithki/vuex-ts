@@ -111,8 +111,20 @@ export class VuexTsModuleInstance<TModule extends VuexTsModule> {
 
     if (modInst.getters) {
       const GettersConstructor = modInst.getters();
-      (this.getters as any) = new GettersConstructor(this);
-      this[Symbols.staticGetters] = (this.getters as any)[Symbols.staticGetters];
+      const gettersInst = new GettersConstructor(this);
+      this[Symbols.staticGetters] = gettersInst[Symbols.staticGetters];
+
+      const mappedGetters: any = {};
+
+      // const gettersUnwrappedProxy = Object.create(Object.getPrototypeOf(gettersInst));
+      for (const handler of Object.keys(this[Symbols.staticGetters])) {
+        Object.defineProperty(mappedGetters, handler, {
+          enumerable: true,
+          get: () => (gettersInst as any)[handler],
+        });
+      }
+
+      this.getters = mappedGetters;
     }
 
     // --- Build strongly-typed mutations --- //

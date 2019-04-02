@@ -60,9 +60,9 @@ export abstract class ModuleGetters extends ModulePart {
       result[name] = (vuexState, vuexGetters, vuexRootState) => {
         const getContext = new Proxy(unwrappedProxy, {
           get: (target, prop, receiver) => {
-            if (prop === 'state') return vuexState;
-            if (prop === 'rootState') return vuexRootState;
-            if (prop === 'module') return this[Symbols.vuexTsModuleInstance];
+            if (prop === Symbols.state) return vuexState;
+            if (prop === Symbols.rootState) return vuexRootState;
+            if (prop === Symbols.module) return this[Symbols.vuexTsModuleInstance];
 
             // Unwrap the proxy and return the getter value.
             return Reflect.get(target, prop, receiver);
@@ -76,9 +76,10 @@ export abstract class ModuleGetters extends ModulePart {
     return result;
   }
 
-  public state: Types.InferModuleState<this> & Types.InferChildState<this>;
-  public rootState: Types.InferRootState<this>;
-  public module: VuexTsModuleInstanceProxy<Types.InferVuexTsModule<this>> & Types.InferChildModuleProxies<this>;
+  public [Symbols.state]: Types.InferModuleState<this> & Types.InferChildState<this>;
+  public [Symbols.rootState]: Types.InferRootState<this>;
+  public [Symbols.module]: VuexTsModuleInstanceProxy<Types.InferVuexTsModule<this>> &
+    Types.InferChildModuleProxies<this>;
 }
 
 // --- Mutations ------------------------------------------------------------ //
@@ -121,8 +122,8 @@ export abstract class ModuleMutations extends ModulePart {
       result[name] = (vuexState, payload) => {
         const mutContext = new Proxy(unwrappedProxy, {
           get: (target, prop, receiver) => {
-            if (prop === 'state') return vuexState;
-            if (prop === 'module') return this[Symbols.vuexTsModuleInstance];
+            if (prop === Symbols.state) return vuexState;
+            if (prop === Symbols.module) return this[Symbols.vuexTsModuleInstance];
 
             return Reflect.get(target, prop, receiver);
           },
@@ -135,9 +136,10 @@ export abstract class ModuleMutations extends ModulePart {
     return result;
   }
 
-  public state: Types.InferModuleState<this> & Types.InferChildState<this>;
-  // @ts-ignore -- Ignoring this because we know the index signature does not match and we don't care.
-  public module: VuexTsModuleInstanceProxy<Types.InferVuexTsModule<this>> & Types.InferChildModuleProxies<this>;
+  public [Symbols.state]: Types.InferModuleState<this> & Types.InferChildState<this>;
+  public [Symbols.module]: VuexTsModuleInstanceProxy<Types.InferVuexTsModule<this>> &
+    Types.InferChildModuleProxies<this>;
+
   [key: string]: (payload?: any) => void;
 }
 
@@ -183,10 +185,10 @@ export abstract class ModuleActions extends ModulePart {
       result[name] = async (vuexContext, payload) => {
         const actContext = new Proxy(unwrappedProxy, {
           get: (target, prop, reciever) => {
-            if (prop === 'context') return vuexContext;
-            if (prop === 'state') return vuexContext.state;
-            if (prop === 'rootState') return vuexContext.rootState;
-            if (prop === 'module') return this[Symbols.vuexTsModuleInstance];
+            if (prop === Symbols.context) return vuexContext;
+            if (prop === Symbols.state) return vuexContext.state;
+            if (prop === Symbols.rootState) return vuexContext.rootState;
+            if (prop === Symbols.module) return this[Symbols.vuexTsModuleInstance];
 
             return Reflect.get(target, prop, reciever);
           },
@@ -199,13 +201,12 @@ export abstract class ModuleActions extends ModulePart {
     return result;
   }
 
-  public state: Types.InferModuleState<this> & Types.InferChildState<this>;
-  public rootState: Types.InferRootState<this>;
-  // @ts-ignore -- Ignoring this because we know the index signature does not match and we don't care.
-  public context: ActionContext<Types.InferModuleState<this>, Types.InferRootState<this>>;
-  // @ts-ignore -- Ignoring this because we know the index signature does not match and we don't care.
-  public module: VuexTsModuleInstanceProxy<Types.InferVuexTsModule<this>> & Types.InferChildModuleProxies<this>;
-  // @ts-ignore -- Ignoring this because we know the index signature does not match and we don't care.
+  public [Symbols.state]: Types.InferModuleState<this> & Types.InferChildState<this>;
+  public [Symbols.rootState]: Types.InferRootState<this>;
+  public [Symbols.context]: ActionContext<Types.InferModuleState<this>, Types.InferRootState<this>>;
+  public [Symbols.module]: VuexTsModuleInstanceProxy<Types.InferVuexTsModule<this>> &
+    Types.InferChildModuleProxies<this>;
+
   [key: string]: (payload?: any) => Promise<any>;
 }
 

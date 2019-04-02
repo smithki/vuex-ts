@@ -3,17 +3,17 @@ import { Expect, SetupFixture, Test, TestFixture } from 'alsatian';
 import Vue from 'vue';
 import Vuex, { Store } from 'vuex';
 
-import { CompositeVuexTsModule, registerVuexTsModules, vuexTsBuilder, VuexTsModule, VuexTsModuleBuilder } from '../src';
+import { registerVuexTsModules, VuexTsModule, vuexTsModuleBuilder, VuexTsModuleInstance } from '../src';
 import { id } from '../src/symbols';
 
-import { Doggo, DoggoBreed, doggoState } from '../example/doggos';
+import { Doggo, DoggoBreed, DoggoModule, doggoState } from '../example/doggos';
 import { kittenState } from '../example/kittens';
 import { moduleIsBound } from '../src/lib';
 
 @TestFixture('VuexTsModule Tests')
 export class VuexTsModuleTestFixture {
   store: Store<any>;
-  dummyModule: CompositeVuexTsModule;
+  dummyModule: VuexTsModuleInstance<DoggoModule>;
 
   @SetupFixture
   setupFixture() {
@@ -24,27 +24,25 @@ export class VuexTsModuleTestFixture {
     });
   }
 
-  @Test('Create a VuexTsModuleBuilder instance without error')
+  @Test('Create a VuexTsModuleInstance object without error')
   public createVuexTsModuleBuilderTest() {
-    const inst = vuexTsBuilder({ name: 'helloWorld' });
+    const inst = vuexTsModuleBuilder(
+      class extends VuexTsModule {
+        name = 'test';
+        state = () => {};
+      },
+    );
     Expect(inst).toBeDefined();
-    Expect(inst instanceof VuexTsModuleBuilder).toBeTruthy();
+    Expect(inst instanceof VuexTsModuleInstance).toBeTruthy();
   }
 
-  @Test('Create a VuexTsModule instance without error')
-  public createVuexTsModuleTest() {
-    const inst = vuexTsBuilder({ name: 'helloWorld' }).inject();
-    Expect(inst).toBeDefined();
-    Expect(inst instanceof VuexTsModule).toBeTruthy();
-  }
-
-  @Test('Successfully clone a VuexTsModule instance')
+  @Test('Successfully clone a VuexTsModuleInstance')
   public cloneVuexTsModuleTest() {
     const clone = kittenState.clone('clone');
     clone.register(this.store);
 
-    Expect(kittenState instanceof VuexTsModule).toBeTruthy();
-    Expect(clone instanceof VuexTsModule).toBeTruthy();
+    Expect(kittenState instanceof VuexTsModuleInstance).toBeTruthy();
+    Expect(clone instanceof VuexTsModuleInstance).toBeTruthy();
 
     // State should be the same
     Expect(clone.state.kittens).toEqual(kittenState.state.kittens);
@@ -57,7 +55,7 @@ export class VuexTsModuleTestFixture {
 
   @Test('Successfully register a module to the store')
   public registerModuleTest() {
-    this.dummyModule = vuexTsBuilder({ name: 'helloWorld' }).inject();
+    this.dummyModule = vuexTsModuleBuilder(DoggoModule);
     this.dummyModule.register(this.store);
 
     Expect(moduleIsBound(this.dummyModule as any)).toBeTruthy();
@@ -88,25 +86,15 @@ export class VuexTsModuleTestFixture {
 
   @Test('Successfully commit a mutation using the object interface')
   public commitMutationObjectTest() {
+    this.dummyModule.register(this.store);
     const newState: Doggo = { name: 'Rover', breed: DoggoBreed.Basset, age: 15 };
-
-    doggoState.commit.addDoggo(newState);
-
+    this.dummyModule.commit.addDoggo(newState);
     Expect(doggoState.state.doggos[1]).toEqual(newState);
-  }
-
-  @Test('Successfully commit a mutation using the function interface')
-  public commitMutationFunctionTest() {
-    const newState: Doggo = { name: 'Fido', breed: DoggoBreed.Golden, age: 8 };
-
-    doggoState.commit('addDoggo', newState);
-
-    Expect(doggoState.state.doggos[2]).toEqual(newState);
   }
 
   @Test(`Access a store's dynamic getters`)
   public accessGetterTest() {
-    Expect(doggoState.getters.oldestDoggo).toBeDefined();
-    Expect(doggoState.getters.oldestDoggo).toEqual({ name: 'Rover', breed: DoggoBreed.Basset, age: 15 });
+    Expect(this.dummyModule.getters.oldestDoggo).toBeDefined();
+    Expect(this.dummyModule.getters.oldestDoggo).toEqual({ name: 'Rover', breed: DoggoBreed.Basset, age: 15 });
   }
 }

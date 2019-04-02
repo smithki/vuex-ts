@@ -32,7 +32,7 @@ export type StateInterfaceFromModule<T extends VuexTsModuleInstance<any>> = T ex
 
 // --- Module type utilities ------------------------------------------------ //
 
-export type reservedKeys = symbol | 'state' | 'rootState' | 'context' | 'module';
+export type reservedKeys = symbol;
 
 export type ModulePartFactory<T extends ModulePart = ModulePart> = (() => ConstructorOf<T>) | undefined;
 

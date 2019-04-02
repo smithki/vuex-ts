@@ -1,4 +1,4 @@
-import { ModuleGetters, ModuleMutations, usedIn, VuexTsModule, vuexTsModuleBuilder } from '../src';
+import { ModuleGetters, ModuleMutations, state, usedIn, VuexTsModule, vuexTsModuleBuilder } from '../src';
 import { RootState } from './root-state';
 
 export enum DoggoBreed {
@@ -22,11 +22,11 @@ export class DoggoGetters extends ModuleGetters {
   [usedIn] = () => DoggoModule;
 
   get oldestDoggo() {
-    return this.state.doggos.reduce((a, b) => (a.age > b.age ? a : b));
+    return this[state].doggos.reduce((a, b) => (a.age > b.age ? a : b));
   }
 
   get youngestDoggo() {
-    return this.state.doggos.reduce((a, b) => (a.age < b.age ? a : b));
+    return this[state].doggos.reduce((a, b) => (a.age < b.age ? a : b));
   }
 }
 
@@ -36,7 +36,7 @@ export class DoggoMutations extends ModuleMutations {
   [usedIn] = () => DoggoModule;
 
   addDoggo(payload: Doggo) {
-    this.state.doggos.push(payload);
+    this[state].doggos.push(payload);
   }
 }
 

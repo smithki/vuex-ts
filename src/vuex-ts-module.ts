@@ -49,9 +49,16 @@ export abstract class VuexTsModule<TModuleState = any, TRootState = any> {
   /** The initial state (and state interface) of this module. */
   public state: () => TModuleState;
 
+  /** Getter handlers for this module. */
   public getters?: () => Types.ConstructorOf<ModuleGetters>;
+
+  /** Mutation handlers for this module. */
   public mutations?: () => Types.ConstructorOf<ModuleMutations>;
+
+  /** Action handlers for this module. */
   public actions?: () => Types.ConstructorOf<ModuleActions>;
+
+  /** Child module definitions. */
   public modules?: () => Types.ConstructorOf<ModuleChildren>;
 }
 
@@ -202,7 +209,7 @@ export class VuexTsModuleInstance<TModule extends VuexTsModule> {
 
   // --- VuexTS-related utilities ------------------------------------------- //
 
-  /** The stringified namespace key for this VuexTsModule. */
+  /** The stringified namespace key of this module. */
   get namespaceKey(): string {
     if (moduleIsBound(this as any)) {
       if (this[Symbols.isRoot]) return '';
@@ -212,7 +219,7 @@ export class VuexTsModuleInstance<TModule extends VuexTsModule> {
     throw new ModuleNotBoundToStoreError(this.name, 'namespaceKey');
   }
 
-  /** The raw underlying Vuex module for this VuexTsModule. */
+  /** The raw, underlying Vuex module. */
   get [Symbols.vuexModule](): Module<Types.GetState<TModule>, any> {
     return {
       namespaced: !this[Symbols.isRoot],
@@ -225,9 +232,10 @@ export class VuexTsModuleInstance<TModule extends VuexTsModule> {
   }
 
   /**
-   * Register this module to the provided Vuex store.
+   * Registers this module to the provided Vuex store. Any nested modules are
+   * automatically registered as well.
    *
-   * @param {Store<RootState>} store - The Vuex store to bind this VuexTsModule to.
+   * @param store - The Vuex store to bind this VuexTsModule to.
    */
   register(store: Store<any>): void {
     if (!store) throw new UndefinedStoreError(this.name);
@@ -247,7 +255,7 @@ export class VuexTsModuleInstance<TModule extends VuexTsModule> {
     bindModuleToStore(this as any, store);
   }
 
-  /** Unregister this module from its bound Vuex store. */
+  /** Unregisters this module from its bound Vuex store. */
   unregister(): void {
     if (moduleIsBound(this as any)) {
       if (this[Symbols.isRoot]) throw new RootModuleUnregisterError(this.name);
@@ -262,11 +270,10 @@ export class VuexTsModuleInstance<TModule extends VuexTsModule> {
   }
 
   /**
-   * Create a Vuex store instance from this VuexTsModule. Nested modules are
-   * automatically registered using this method.
+   * Create a Vuex store instance from this module. Any nested modules are
+   * automatically registered as well.
    *
-   * @param options - Options you would provide to `new Vuex.Store({ ...
-   * })`.
+   * @param options - Options you would provide to `new Vuex.Store({ ... })`.
    */
   toStore(options: Types.BareStoreOptions<any> = {}): Store<any> {
     this[Symbols.isRoot] = true;
@@ -283,8 +290,8 @@ export class VuexTsModuleInstance<TModule extends VuexTsModule> {
 }
 
 /**
- * Proxy of `VuexTsModuleInstance` used internally by `vuex-ts` to solve
- * circular type references.
+ * Proxies certain properties of `VuexTsModuleInstance`, used internally to
+ * solve circular type references.
  */
 export abstract class VuexTsModuleInstanceProxy<TModule extends VuexTsModule> {
   readonly state: Types.GetState<TModule>;

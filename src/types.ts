@@ -9,6 +9,8 @@ import { typeMetadata, usedIn } from './symbols';
 import { VuexTsModule, VuexTsModuleInstance, VuexTsModuleInstanceProxy } from './vuex-ts-module';
 
 // --- General type utilities ----------------------------------------------- //
+// These are miscellaneous type utilities that help with serveral tasks across
+// the library.
 
 export type ConstructorOf<C> = { new (...args: any[]): C };
 
@@ -22,7 +24,7 @@ export type KnownKeys<T> = { [K in keyof T]: string extends K ? never : number e
     : never
   : never;
 
-export type MappedKnownKeys<T> = Pick<T, Exclude<KnownKeys<T>, symbol>>;
+export type MappedKnownKeys<T> = Pick<T, Exclude<KnownKeys<T>, reservedKeys>>;
 
 export interface BareStoreOptions<RootState> extends Pick<StoreOptions<RootState>, 'plugins' | 'strict'> {}
 
@@ -31,6 +33,8 @@ export type StateInterfaceFromModule<T extends VuexTsModuleInstance<any>> = T ex
   : never;
 
 // --- Module type utilities ------------------------------------------------ //
+// These are general utilities that help with unpacking type metadata from
+// `ModulePart` objects.
 
 export type reservedKeys = symbol;
 
@@ -46,7 +50,7 @@ export type MappedModulePart<T extends ModulePartFactory> = T extends ModuleActi
   : Pick<UnwrapModulePartFactory<T>, Exclude<KnownKeys<UnwrapModulePartFactory<T>>, reservedKeys>>;
 
 export type ChildState<T extends ModuleChildren> = {
-  [P in keyof T]: InstanceType<ReturnType<T[P]>>[typeof typeMetadata][MetadataModuleState] &
+  [P in KnownKeys<T>]: InstanceType<ReturnType<T[P]>>[typeof typeMetadata][MetadataModuleState] &
     ChildState<InstanceType<ReturnType<T[P]>>[typeof typeMetadata][MetadataChildren]>
 };
 
@@ -61,6 +65,7 @@ export type MetadataChildren    = 6;
 // tslint:enable:prettier
 
 // --- ModulePart type utilities -------------------------------------------- //
+// These are helpers to extract types from an instance of `ModulePart`.
 
 export type GetParent<T extends ModulePart> = InstanceType<ReturnType<T[typeof usedIn]>>;
 export type GetParentTypeMetadata<T extends ModulePart> = GetParent<T>[typeof typeMetadata];
@@ -89,6 +94,7 @@ export type InferChildModuleProxies<T extends ModulePart> = {
 };
 
 // --- VuexTsModule type utilities ------------------------------------------ //
+// These are helpers to extract types from an instance of `VuexTsModule`.
 
 // tslint:disable:prettier
 export type GetState<T extends VuexTsModule>      = ReturnType<T['state']>;
@@ -107,6 +113,7 @@ export type GetChildModuleProxies<T extends VuexTsModule> = {
 };
 
 // --- Static Vuex definitions ---------------------------------------------- //
+// These are dictionary types given to the raw, underlying Vuex module.
 
 export type StaticGetters = { [key: string]: (vuexState: any, vuexGetters: any, vuexRootState: any) => any };
 export type StaticMutations = { [key: string]: (vuexState: any, payload: any) => void };

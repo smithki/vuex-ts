@@ -76,7 +76,7 @@ export abstract class ModuleGetters extends ModulePart {
     return result;
   }
 
-  public [Symbols.getState]: Types.InferModuleState<this> & Types.InferChildState<this>;
+  public [Symbols.getState]: Types.InferModuleState<this>;
   public [Symbols.getRootState]: Types.InferRootState<this>;
   public [Symbols.getModule]: VuexTsModuleInstanceProxy<Types.InferVuexTsModule<this>> &
     Types.InferChildModuleProxies<this>;
@@ -136,7 +136,7 @@ export abstract class ModuleMutations extends ModulePart {
     return result;
   }
 
-  public [Symbols.getState]: Types.InferModuleState<this> & Types.InferChildState<this>;
+  public [Symbols.getState]: Types.InferModuleState<this>;
   public [Symbols.getModule]: VuexTsModuleInstanceProxy<Types.InferVuexTsModule<this>> &
     Types.InferChildModuleProxies<this>;
 
@@ -201,7 +201,7 @@ export abstract class ModuleActions extends ModulePart {
     return result;
   }
 
-  public [Symbols.getState]: Types.InferModuleState<this> & Types.InferChildState<this>;
+  public [Symbols.getState]: Types.InferModuleState<this>;
   public [Symbols.getRootState]: Types.InferRootState<this>;
   public [Symbols.getContext]: ActionContext<Types.InferModuleState<this>, Types.InferRootState<this>>;
   public [Symbols.getModule]: VuexTsModuleInstanceProxy<Types.InferVuexTsModule<this>> &

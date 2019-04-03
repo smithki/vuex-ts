@@ -156,7 +156,7 @@ import { MyModule } from './path/to/myModule';
 export class MyModuleChildren extends ModuleChildren {
   [usedIn] = () => MyModule;
 
-  // Must be a function or method that returns an constructor of VuexTsModule
+  // Must be a function or method that returns a constructor of VuexTsModule
   someNestedModule = () => someNestedModule;
 }
 ```

@@ -89,7 +89,7 @@ export class VuexTsModuleTestFixture {
     this.dummyModule.register(this.store);
     const newState: Doggo = { name: 'Rover', breed: DoggoBreed.Basset, age: 15 };
     this.dummyModule.commit.addDoggo(newState);
-    Expect(doggoState.state.doggos[1]).toEqual(newState);
+    Expect(this.dummyModule.state.doggos[1]).toEqual(newState);
   }
 
   @Test(`Access a store's dynamic getters`)

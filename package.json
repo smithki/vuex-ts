@@ -31,7 +31,7 @@
     "test": "npm-run-all -s test:*",
     "test:compile": "tsc -p ./test",
     "test:run": "alsatian ./test/dist/**/*.spec.js",
-    "prepublishOnly": "npm run build"
+    "lint": "tslint --project ."
   },
   "peerDependencies": {
     "vuex": "^3.1.0"

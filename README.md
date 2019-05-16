@@ -86,7 +86,7 @@ Now let's write our `getters`:
 import { ModuleGetters, get, usedIn } from 'vuex-ts';
 import { MyModule } from './path/to/myModule';
 
-export class MyModuleGetters extends ModuleGetters<MyModuleState, RootState> {
+export class MyModuleGetters extends ModuleGetters {
   // We set this hint to enable strong typing throughout the module, including
   // references to registered mutations, actions, getters, and child modules.
   [usedIn] = () => MyModule;
